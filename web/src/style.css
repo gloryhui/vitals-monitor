@@ -1401,7 +1401,8 @@ summary:hover {
 }
 
 .detail-panel {
-  width: min(880px, 96vw);
+  width: 70vw;
+  min-width: min(96vw, 760px);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -1438,6 +1439,7 @@ summary:hover {
 }
 
 .detail-section {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px 16px;
@@ -1563,9 +1565,11 @@ summary:hover {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .detail-panel {
-    width: 100%;
+    width: 100vw;
+    min-width: 0;
+    max-width: none;
   }
 }
 
@@ -1693,8 +1697,19 @@ summary:hover {
 /* horizontally scrollable detail tables */
 .table-wrap {
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .table-wrap .dtable {
-  min-width: 680px;
+  min-width: 900px;
+}
+
+.table-wrap .dtable td,
+.table-wrap .dtable th {
+  white-space: nowrap;
+}
+
+.table-wrap .dtable td.cmd {
+  white-space: pre-wrap;
+  min-width: 240px;
 }
