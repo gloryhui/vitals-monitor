@@ -150,6 +150,7 @@ class ProcessSampler:
         self.clock = clock
         self.previous = {}
         self.previous_time = None
+        self.last_rows = []
         self.hz = os.sysconf("SC_CLK_TCK")
         self.page_size = os.sysconf("SC_PAGE_SIZE")
 
@@ -183,6 +184,7 @@ class ProcessSampler:
         if not rows:
             raise RuntimeError("无法读取进程信息")
         self.previous, self.previous_time = previous, now
+        self.last_rows = rows
         return {"cpu": sorted(rows, key=lambda p: (p["cpu_percent"] if p["cpu_percent"] is not None else -1, p["rss_bytes"]), reverse=True)[:5],
                 "memory": sorted(rows, key=lambda p: p["rss_bytes"], reverse=True)[:5],
                 "count": len(rows), "cpu_basis": "one_core", "window_seconds": round(elapsed, 2) if elapsed else None}

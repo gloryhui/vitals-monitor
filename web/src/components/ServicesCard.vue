@@ -2,7 +2,10 @@
   <section class="card">
     <div class="card-head">
       <h2>服务检查 <span class="pill" :class="summaryTone">{{ summary }}</span></h2>
-      <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+      <div class="card-tools">
+        <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+        <button class="btn btn-sm" type="button" @click="$emit('detail')">详情</button>
+      </div>
     </div>
     <div class="card-body">
       <div v-if="services.length" class="service-grid">
@@ -29,6 +32,8 @@
 
 <script setup>
 import { computed, inject } from "vue";
+
+defineEmits(["detail"]);
 
 const dash = inject("dash");
 const state = computed(() => dash.groupState("services"));

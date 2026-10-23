@@ -6,12 +6,13 @@
     <HeroPanel />
     <StatusStrip />
     <BasicsCard />
-    <ServicesCard />
-    <ResourceSection @zoom="openZoom" />
+    <ServicesCard @detail="openDetail('services')" />
+    <ResourceSection @zoom="openZoom" @detail="openDetail" />
     <EventsCard />
     <FooterBar />
   </div>
   <ChartModal v-if="zoomChart" :chart="zoomChart" @close="closeZoom" />
+  <DetailDrawer v-if="detailKey" :detail="detailKey" @close="detailKey = null" />
 </template>
 
 <script setup>
@@ -27,6 +28,7 @@ import EventsCard from "./components/EventsCard.vue";
 import FooterBar from "./components/FooterBar.vue";
 import ChartModal from "./components/ChartModal.vue";
 import StatusStrip from "./components/StatusStrip.vue";
+import DetailDrawer from "./components/DetailDrawer.vue";
 import LoginView from "./components/LoginView.vue";
 
 const dash = createDashboard();
@@ -35,6 +37,7 @@ provide("dash", dash);
 const clock = ref("");
 const lunar = ref("");
 const zoomChart = ref(null);
+const detailKey = ref(null);
 let timer = null;
 
 function updateClock() {
@@ -66,6 +69,10 @@ function openZoom(chartId) {
 
 function closeZoom() {
   zoomChart.value = null;
+}
+
+function openDetail(key) {
+  detailKey.value = key;
 }
 
 function onVisibility() {

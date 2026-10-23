@@ -2,7 +2,10 @@
   <article class="card">
     <div class="card-head">
       <h2>容器</h2>
-      <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+      <div class="card-tools">
+        <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+        <button class="btn btn-sm" type="button" @click="$emit('detail')">详情</button>
+      </div>
     </div>
     <div class="card-body">
       <div class="metric">
@@ -42,6 +45,8 @@
 
 <script setup>
 import { computed, inject, ref } from "vue";
+
+defineEmits(["detail"]);
 
 const dash = inject("dash");
 const query = ref("");

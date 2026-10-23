@@ -478,6 +478,25 @@ class HTTPTest(unittest.TestCase):
         self.assertEqual(self.request("/api/session", cookie=False)[1]["authenticated"], False)
         self.assertEqual(self.request("/api/session")[1]["username"], "tester")
 
+    def test_processes_endpoint_returns_ranked_snapshot(self):
+        rows = [{"pid": index, "name": f"p{index}", "cpu_percent": float(index),
+                 "rss_bytes": index * 1024, "memory_percent": index / 10} for index in range(40)]
+        monitor._process_sampler.last_rows = rows
+        try:
+            code, payload, _ = self.request("/api/processes?limit=30")
+            self.assertEqual(code, 200)
+            self.assertEqual(payload["count"], 40)
+            self.assertEqual(len(payload["cpu"]), 30)
+            self.assertEqual(payload["cpu"][0]["pid"], 39)
+            self.assertEqual(payload["memory"][0]["pid"], 39)
+            self.assertEqual(payload["cpu_basis"], "one_core")
+            self.assertEqual(self.request("/api/processes?limit=bad")[0], 400)
+            self.assertEqual(self.request("/api/processes", cookie=False)[0], 401)
+            monitor._process_sampler.last_rows = []
+            self.assertEqual(self.request("/api/processes")[1]["cpu"], [])
+        finally:
+            monitor._process_sampler.last_rows = []
+
     def test_login_cookie_grants_access_and_logout_revokes_it(self):
         code, payload, headers = self.request("/api/login", "POST", cookie=False,
                                               body={"username": "tester", "password": "correct-horse"})

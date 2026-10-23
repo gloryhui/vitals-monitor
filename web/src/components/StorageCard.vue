@@ -2,7 +2,10 @@
   <article class="card full">
     <div class="card-head">
       <h2>存储</h2>
-      <span class="muted" style="font-size: 11px">容量与健康分开更新</span>
+      <div class="card-tools">
+        <span class="muted" style="font-size: 11px">容量与健康分开更新</span>
+        <button class="btn btn-sm" type="button" @click="$emit('detail')">详情</button>
+      </div>
     </div>
     <div class="card-body">
       <ChartBlock
@@ -94,7 +97,7 @@ import ChartBlock from "./ChartBlock.vue";
 import { CHARTS } from "../charts";
 import { fmtBytes } from "../format";
 
-defineEmits(["zoom"]);
+defineEmits(["zoom", "detail"]);
 
 const dash = inject("dash");
 const chart = CHARTS.chartDisk;

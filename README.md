@@ -11,7 +11,7 @@ Read-only Linux server status dashboard: 1-second live metrics, 90-day SQLite hi
 - **Bounded archive**: SQLite with WAL, zlib-compressed payloads, 90-day retention (configurable) and hourly rollup for 30/90-day charts.
 - **Incident journal**: threshold + hysteresis, restart-safe pending state, no fabricated recoveries.
 - **Authentication**: scrypt password hashes, SHA-256 session digests, `HttpOnly` cookie plus Bearer fallback for browsers that block cookies, per-client login throttling.
-- **UI**: per-chart time range (10 minutes – 90 days), zoom modal, light/dark theme, responsive layout.
+- **UI**: per-chart time range (10 minutes – 90 days), zoom modal, detail drawers per section (CPU/memory process ranking, full temperature, storage, network, containers, services), light/dark theme, responsive layout.
 
 ## Architecture
 
@@ -93,6 +93,7 @@ Environment overrides: `VITALS_DB`, `VITALS_CONFIG`, `VITALS_ADMIN_PASSWORD`.
 | `GET /api/overview` | required | Collector groups, alert policy, retention info |
 | `GET /api/history?minutes=1440` | required | Aggregated trend; >7 days uses the hourly rollup |
 | `GET /api/events?limit=30` | required | Incident journal, `before` cursor for paging |
+| `GET /api/processes?limit=30` | required | Latest process snapshot ranked by CPU and memory |
 
 ## Deployment
 

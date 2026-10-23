@@ -14,12 +14,12 @@
     </label>
   </div>
   <div class="resource-grid">
-    <CpuCard @zoom="$emit('zoom', $event)" />
-    <MemoryCard @zoom="$emit('zoom', $event)" />
-    <TemperatureCard @zoom="$emit('zoom', $event)" />
-    <StorageCard @zoom="$emit('zoom', $event)" />
-    <NetworkCard @zoom="$emit('zoom', $event)" />
-    <ContainersCard />
+    <CpuCard @zoom="$emit('zoom', $event)" @detail="$emit('detail', 'cpu')" />
+    <MemoryCard @zoom="$emit('zoom', $event)" @detail="$emit('detail', 'memory')" />
+    <TemperatureCard @zoom="$emit('zoom', $event)" @detail="$emit('detail', 'temperature')" />
+    <StorageCard @zoom="$emit('zoom', $event)" @detail="$emit('detail', 'storage')" />
+    <NetworkCard @zoom="$emit('zoom', $event)" @detail="$emit('detail', 'network')" />
+    <ContainersCard @detail="$emit('detail', 'containers')" />
   </div>
 </template>
 
@@ -33,7 +33,7 @@ import StorageCard from "./StorageCard.vue";
 import NetworkCard from "./NetworkCard.vue";
 import ContainersCard from "./ContainersCard.vue";
 
-defineEmits(["zoom"]);
+defineEmits(["zoom", "detail"]);
 
 const dash = inject("dash");
 const hint = computed(() => {

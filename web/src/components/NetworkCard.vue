@@ -2,7 +2,10 @@
   <article class="card">
     <div class="card-head">
       <h2>网络</h2>
-      <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+      <div class="card-tools">
+        <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+        <button class="btn btn-sm" type="button" @click="$emit('detail')">详情</button>
+      </div>
     </div>
     <div class="card-body">
       <div class="metric">
@@ -36,7 +39,7 @@ import ChartBlock from "./ChartBlock.vue";
 import { CHARTS } from "../charts";
 import { fmtRate } from "../format";
 
-defineEmits(["zoom"]);
+defineEmits(["zoom", "detail"]);
 
 const dash = inject("dash");
 const chart = CHARTS.chartNetwork;

@@ -708,6 +708,9 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/events":
             self.events_response(url.query)
             return
+        if url.path == "/api/processes":
+            self.processes_response(url.query)
+            return
         with _state_lock:
             if url.path == "/api/status":
                 age = time.time() - _state["sampled_at"] if _state else None
@@ -797,6 +800,22 @@ class Handler(BaseHTTPRequestHandler):
                 _auth.delete_session(token)
         self.send_json(200, {"ok": True},
                        {"Set-Cookie": f"{SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"})
+
+    def processes_response(self, query):
+        params = parse_qs(query)
+        try:
+            limit = max(5, min(100, int(params.get("limit", ["30"])[0])))
+        except (ValueError, TypeError):
+            self.send_json(400, {"error": "invalid process query"})
+            return
+        rows = list(getattr(_process_sampler, "last_rows", []) or [])
+        if not rows:
+            self.send_json(200, {"cpu": [], "memory": [], "count": 0, "cpu_basis": "one_core"})
+            return
+        cpu = sorted(rows, key=lambda p: (p.get("cpu_percent") if p.get("cpu_percent") is not None else -1,
+                                          p.get("rss_bytes") or 0), reverse=True)[:limit]
+        memory = sorted(rows, key=lambda p: p.get("rss_bytes") or 0, reverse=True)[:limit]
+        self.send_json(200, {"cpu": cpu, "memory": memory, "count": len(rows), "cpu_basis": "one_core"})
 
     def events_response(self, query):
         params = parse_qs(query)

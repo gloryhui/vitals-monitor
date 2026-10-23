@@ -2,7 +2,10 @@
   <article class="card full">
     <div class="card-head">
       <h2>温度监测 <span class="pill">{{ readings.length ? `${readings.length} 项温度` : "读取中" }}</span></h2>
-      <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+      <div class="card-tools">
+        <span class="pill" :class="{ warn: state.stale }">{{ statusText }}</span>
+        <button class="btn btn-sm" type="button" @click="$emit('detail')">详情</button>
+      </div>
     </div>
     <div class="card-body">
       <div class="temperature-grid">
@@ -39,7 +42,7 @@ import ChartBlock from "./ChartBlock.vue";
 import { CHARTS } from "../charts";
 import { num } from "../format";
 
-defineEmits(["zoom"]);
+defineEmits(["zoom", "detail"]);
 
 const dash = inject("dash");
 const chart = CHARTS.chartTemp;
