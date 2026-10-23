@@ -57,5 +57,5 @@ export const api = {
   history: (minutes) => request(`/api/history?minutes=${minutes}`),
   events: (limit = 30, before = null) =>
     request(`/api/events?limit=${limit}${before ? `&before=${before}` : ""}`),
-  processes: (limit = 30) => request(`/api/processes?limit=${limit}`),
+  processes: (limit = 0) => request(`/api/processes${limit ? `?limit=${limit}` : ""}`),
 };

@@ -7,6 +7,7 @@ import json
 import math
 import os
 from pathlib import Path
+import pwd
 import re
 import shutil
 import socket
@@ -151,6 +152,8 @@ class ProcessSampler:
         self.previous = {}
         self.previous_time = None
         self.last_rows = []
+        self.last_sampled_at = None
+        self.users = {}
         self.hz = os.sysconf("SC_CLK_TCK")
         self.page_size = os.sysconf("SC_PAGE_SIZE")
 
@@ -162,6 +165,11 @@ class ProcessSampler:
             if line.startswith("MemTotal:"):
                 total_memory = int(line.split()[1]) * 1024
                 break
+        try:
+            uptime = float((self.root / "uptime").read_text().split()[0])
+        except (OSError, ValueError, IndexError):
+            uptime = 0.0
+        boot_time = time.time() - uptime
         previous, rows = {}, []
         for directory in self.root.iterdir():
             if not directory.name.isdigit():
@@ -171,13 +179,33 @@ class ProcessSampler:
                 left, right = stat.index("("), stat.rindex(")")
                 fields = stat[right + 2:].split()
                 ticks = int(fields[11]) + int(fields[12])
-                key = (int(directory.name), int(fields[19]))
+                start_ticks = int(fields[19])
+                key = (int(directory.name), start_ticks)
                 previous[key] = ticks
                 delta = ticks - self.previous.get(key, ticks)
                 usage = round(delta / self.hz / elapsed * 100, 1) if key in self.previous and elapsed and elapsed > 0 and delta >= 0 else None
                 rss = max(0, int(fields[21])) * self.page_size
-                rows.append({"pid": key[0], "name": stat[left + 1:right][:100], "cpu_percent": usage,
-                             "rss_bytes": rss, "memory_percent": round(rss / total_memory * 100, 1) if total_memory else None})
+                status = self._status(directory)
+                uid = self._uid(status)
+                rows.append({
+                    "pid": key[0],
+                    "name": stat[left + 1:right][:100],
+                    "state": fields[0],
+                    "ppid": int(fields[1]),
+                    "uid": uid,
+                    "user": self._user(uid),
+                    "threads": self._threads(status),
+                    "cpu_percent": usage,
+                    "cpu_time": round(ticks / self.hz, 2),
+                    "rss_bytes": rss,
+                    "vsize_bytes": self._kilobytes(status.get("VmSize")),
+                    "swap_bytes": self._kilobytes(status.get("VmSwap")),
+                    "memory_percent": round(rss / total_memory * 100, 1) if total_memory else None,
+                    "started_at": round(boot_time + start_ticks / self.hz, 1),
+                    "exe": self._link(directory / "exe"),
+                    "cwd": self._link(directory / "cwd"),
+                    "cmdline": self._cmdline(directory),
+                })
             except (OSError, ValueError, IndexError):
                 # Processes may exit or become unreadable between directory and stat reads.
                 continue
@@ -185,9 +213,69 @@ class ProcessSampler:
             raise RuntimeError("无法读取进程信息")
         self.previous, self.previous_time = previous, now
         self.last_rows = rows
+        self.last_sampled_at = time.time()
         return {"cpu": sorted(rows, key=lambda p: (p["cpu_percent"] if p["cpu_percent"] is not None else -1, p["rss_bytes"]), reverse=True)[:5],
                 "memory": sorted(rows, key=lambda p: p["rss_bytes"], reverse=True)[:5],
                 "count": len(rows), "cpu_basis": "one_core", "window_seconds": round(elapsed, 2) if elapsed else None}
+
+    @staticmethod
+    def _status(directory):
+        values = {}
+        try:
+            for line in (directory / "status").read_text().splitlines():
+                key, _, rest = line.partition(":")
+                if key in ("Uid", "Threads", "VmSize", "VmSwap"):
+                    values[key] = rest.strip()
+        except OSError:
+            pass
+        return values
+
+    @staticmethod
+    def _uid(status):
+        try:
+            return int(status.get("Uid", "0").split()[0])
+        except (ValueError, IndexError):
+            return 0
+
+    @staticmethod
+    def _threads(status):
+        try:
+            return int(status.get("Threads", "").split()[0])
+        except (ValueError, IndexError):
+            return None
+
+    @staticmethod
+    def _kilobytes(raw):
+        if not raw:
+            return 0
+        try:
+            return int(raw.split()[0]) * 1024
+        except (ValueError, IndexError):
+            return 0
+
+    def _user(self, uid):
+        if uid not in self.users:
+            try:
+                self.users[uid] = pwd.getpwuid(uid).pw_name
+            except KeyError:
+                self.users[uid] = str(uid)
+        return self.users[uid]
+
+    @staticmethod
+    def _link(path):
+        try:
+            return os.readlink(path)[:300]
+        except OSError:
+            return ""
+
+    @staticmethod
+    def _cmdline(directory):
+        try:
+            raw = (directory / "cmdline").read_bytes()
+        except OSError:
+            return ""
+        parts = [part.decode("utf-8", "replace") for part in raw.split(b"\0") if part]
+        return " ".join(parts)[:500]
 
 
 class NoRedirect(HTTPRedirectHandler):

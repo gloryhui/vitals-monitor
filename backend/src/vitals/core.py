@@ -804,18 +804,18 @@ class Handler(BaseHTTPRequestHandler):
     def processes_response(self, query):
         params = parse_qs(query)
         try:
-            limit = max(5, min(100, int(params.get("limit", ["30"])[0])))
+            limit = max(0, min(2000, int(params.get("limit", ["0"])[0])))
         except (ValueError, TypeError):
             self.send_json(400, {"error": "invalid process query"})
             return
-        rows = list(getattr(_process_sampler, "last_rows", []) or [])
-        if not rows:
-            self.send_json(200, {"cpu": [], "memory": [], "count": 0, "cpu_basis": "one_core"})
-            return
-        cpu = sorted(rows, key=lambda p: (p.get("cpu_percent") if p.get("cpu_percent") is not None else -1,
-                                          p.get("rss_bytes") or 0), reverse=True)[:limit]
-        memory = sorted(rows, key=lambda p: p.get("rss_bytes") or 0, reverse=True)[:limit]
-        self.send_json(200, {"cpu": cpu, "memory": memory, "count": len(rows), "cpu_basis": "one_core"})
+        raw = list(getattr(_process_sampler, "last_rows", []) or [])
+        rows = sorted(raw, key=lambda p: (p.get("cpu_percent") if p.get("cpu_percent") is not None else -1,
+                                          p.get("rss_bytes") or 0), reverse=True)
+        if limit:
+            rows = rows[:limit]
+        self.send_json(200, {"processes": rows, "count": len(rows), "total": len(raw),
+                             "sampled_at": getattr(_process_sampler, "last_sampled_at", None),
+                             "cpu_basis": "one_core"})
 
     def events_response(self, query):
         params = parse_qs(query)

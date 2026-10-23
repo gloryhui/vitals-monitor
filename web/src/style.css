@@ -1568,3 +1568,124 @@ summary:hover {
     width: 100%;
   }
 }
+
+/* virtualized process list */
+.detail-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.search.inline {
+  width: 240px;
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+
+.phead,
+.prow {
+  display: grid;
+  grid-template-columns: 62px minmax(110px, 1.1fr) 60px 68px 76px 76px minmax(0, 1.6fr);
+  gap: 8px;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.phead {
+  height: 30px;
+  font-size: 10.5px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.phead .num,
+.prow .num {
+  text-align: right;
+}
+
+.phead .num {
+  text-align: right;
+}
+
+.vscroll {
+  height: 52vh;
+  min-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.vscroll-space {
+  position: relative;
+}
+
+.vscroll-rows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.prow {
+  width: 100%;
+  height: 38px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  background: transparent;
+  text-align: left;
+  font-size: 11.5px;
+  color: var(--text);
+}
+
+.prow:hover {
+  background: var(--surface-2);
+}
+
+.prow.active {
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.prow .pname,
+.prow .puser,
+.prow .pcmd {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prow .puser {
+  color: var(--muted);
+}
+
+.prow .pcmd {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+
+.pempty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dtable td.cmd {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 11.5px;
+}

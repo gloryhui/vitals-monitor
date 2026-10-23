@@ -14,8 +14,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import CpuDetail from "./CpuDetail.vue";
-import MemoryDetail from "./MemoryDetail.vue";
+import ProcessDetail from "./ProcessDetail.vue";
 import TemperatureDetail from "./TemperatureDetail.vue";
 import StorageDetail from "./StorageDetail.vue";
 import NetworkDetail from "./NetworkDetail.vue";
@@ -26,8 +25,8 @@ const props = defineProps({ detail: { type: String, required: true } });
 const emit = defineEmits(["close"]);
 
 const COMPONENTS = {
-  cpu: CpuDetail,
-  memory: MemoryDetail,
+  cpu: ProcessDetail,
+  memory: ProcessDetail,
   temperature: TemperatureDetail,
   storage: StorageDetail,
   network: NetworkDetail,
@@ -35,8 +34,8 @@ const COMPONENTS = {
   services: ServicesDetail,
 };
 const TITLES = {
-  cpu: "CPU 详情",
-  memory: "内存详情",
+  cpu: "进程详情",
+  memory: "进程详情",
   temperature: "温度详情",
   storage: "存储详情",
   network: "网络详情",

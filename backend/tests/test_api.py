@@ -483,17 +483,17 @@ class HTTPTest(unittest.TestCase):
                  "rss_bytes": index * 1024, "memory_percent": index / 10} for index in range(40)]
         monitor._process_sampler.last_rows = rows
         try:
-            code, payload, _ = self.request("/api/processes?limit=30")
+            code, payload, _ = self.request("/api/processes")
             self.assertEqual(code, 200)
             self.assertEqual(payload["count"], 40)
-            self.assertEqual(len(payload["cpu"]), 30)
-            self.assertEqual(payload["cpu"][0]["pid"], 39)
-            self.assertEqual(payload["memory"][0]["pid"], 39)
+            self.assertEqual(len(payload["processes"]), 40)
+            self.assertEqual(payload["processes"][0]["pid"], 39)
             self.assertEqual(payload["cpu_basis"], "one_core")
+            self.assertEqual(self.request("/api/processes?limit=5")[1]["count"], 5)
             self.assertEqual(self.request("/api/processes?limit=bad")[0], 400)
             self.assertEqual(self.request("/api/processes", cookie=False)[0], 401)
             monitor._process_sampler.last_rows = []
-            self.assertEqual(self.request("/api/processes")[1]["cpu"], [])
+            self.assertEqual(self.request("/api/processes")[1]["processes"], [])
         finally:
             monitor._process_sampler.last_rows = []
 

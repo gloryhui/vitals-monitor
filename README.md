@@ -11,7 +11,7 @@ Read-only Linux server status dashboard: 1-second live metrics, 90-day SQLite hi
 - **Bounded archive**: SQLite with WAL, zlib-compressed payloads, 90-day retention (configurable) and hourly rollup for 30/90-day charts.
 - **Incident journal**: threshold + hysteresis, restart-safe pending state, no fabricated recoveries.
 - **Authentication**: scrypt password hashes, SHA-256 session digests, `HttpOnly` cookie plus Bearer fallback for browsers that block cookies, per-client login throttling.
-- **UI**: per-chart time range (10 minutes – 90 days), zoom modal, detail drawers per section (CPU/memory process ranking, full temperature, storage, network, containers, services), light/dark theme, responsive layout.
+- **UI**: per-chart time range (10 minutes – 90 days), zoom modal, detail drawers (every process in a virtualized list with search/sort, full temperature, storage, network, paginated containers, services), light/dark theme, responsive layout.
 
 ## Architecture
 
@@ -93,7 +93,7 @@ Environment overrides: `VITALS_DB`, `VITALS_CONFIG`, `VITALS_ADMIN_PASSWORD`.
 | `GET /api/overview` | required | Collector groups, alert policy, retention info |
 | `GET /api/history?minutes=1440` | required | Aggregated trend; >7 days uses the hourly rollup |
 | `GET /api/events?limit=30` | required | Incident journal, `before` cursor for paging |
-| `GET /api/processes?limit=30` | required | Latest process snapshot ranked by CPU and memory |
+| `GET /api/processes` | required | Full process snapshot (cmdline, exe, cwd, user, threads, memory); optional `limit` |
 
 ## Deployment
 
@@ -133,6 +133,7 @@ The test suite uses temporary databases and local HTTP/TCP ports; it never stops
 - Do not expose the project root without the nginx deny rules: it contains backend sources and configuration.
 - The service runs as root because `smartctl`, `dmidecode` and `sensors` need privileged access. Keep the HTTP listener behind a reverse proxy and restrict it to loopback or a container network.
 - The IP allowlist in `core.py` (`127.0.0.0/8`, `172.16.0.0/12`) is a defence-in-depth measure, not a substitute for authentication.
+- The process drawer reads `/proc/<pid>/cmdline`, `exe` and `cwd`, which may contain credentials passed on a command line. It is only served to authenticated users; keep that in mind before screenshots or exports.
 
 ## License
 

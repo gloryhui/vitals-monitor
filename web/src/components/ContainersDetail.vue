@@ -14,7 +14,7 @@
       <table class="dtable">
         <thead><tr><th>名称</th><th>镜像</th><th>状态</th><th>健康</th></tr></thead>
         <tbody>
-          <tr v-for="item in rows" :key="item.name">
+          <tr v-for="item in paged" :key="item.name">
             <td class="mono">{{ item.name }}</td>
             <td class="mono">{{ item.image }}</td>
             <td>{{ stateLabel(item) }}</td>
@@ -40,14 +40,25 @@
       </table>
       <p class="note">可回收量由 Docker 估算，仅供查看。</p>
     </section>
+
+    <div class="pager">
+      <button class="btn btn-sm" type="button" :disabled="page <= 1" @click="page -= 1">上一页</button>
+      <span class="muted">第 {{ page }} / {{ pageCount }} 页 · 共 {{ rows.length }} 个</span>
+      <button class="btn btn-sm" type="button" :disabled="page >= pageCount" @click="page += 1">下一页</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, inject } from "vue";
+import { computed, inject, ref, watch } from "vue";
 
 const dash = inject("dash");
 const rows = computed(() => dash.groupData("containers") || []);
+const page = ref(1);
+const pageSize = 10;
+const pageCount = computed(() => Math.max(1, Math.ceil(rows.value.length / pageSize)));
+const paged = computed(() => rows.value.slice((page.value - 1) * pageSize, page.value * pageSize));
+watch(pageCount, (count) => { if (page.value > count) page.value = count; });
 const docker = computed(() => dash.groupData("docker_usage") || []);
 const running = computed(() => rows.value.filter((item) => item.state === "running").length);
 const unhealthy = computed(() => rows.value.filter((item) => item.health === "unhealthy").length);
