@@ -28,6 +28,7 @@ dev-web:
 	cd web && npm run dev
 
 build-web:
+	rm -rf assets
 	cd web && npm install && npm run build
 
 deploy: build-web
