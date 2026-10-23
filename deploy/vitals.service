@@ -1,0 +1,19 @@
+[Unit]
+Description=Vitals server status dashboard
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/vitals
+Environment=PYTHONPATH=/opt/vitals/backend/src
+Environment=VITALS_CONFIG=/opt/vitals/config/vitals-config.json
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m vitals
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

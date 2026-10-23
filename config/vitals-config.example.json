@@ -1,0 +1,31 @@
+{
+  "retention_days": 90,
+  "auth": {
+    "session_hours": 12,
+    "admin_user": "admin",
+    "admin_password": null,
+    "secure_cookie": false
+  },
+  "services": [
+    { "id": "ssh", "name": "SSH", "type": "systemd", "unit": "ssh.service" },
+    { "id": "docker", "name": "Docker", "type": "systemd", "unit": "docker.service" },
+    { "id": "web", "name": "Status page", "type": "http", "url": "http://127.0.0.1:3003/" },
+    { "id": "wordpress", "name": "WordPress", "type": "http", "url": "http://127.0.0.1:8081/" }
+  ],
+  "alerts": {
+    "cpu_percent": 90,
+    "cpu_recovery_percent": 80,
+    "cpu_hold_seconds": 60,
+    "memory_percent": 90,
+    "memory_recovery_percent": 85,
+    "memory_hold_seconds": 60,
+    "filesystem_percent": 90,
+    "filesystem_recovery_percent": 85,
+    "filesystem_hold_seconds": 30,
+    "recovery_seconds": 30,
+    "service_failures": 3,
+    "service_recoveries": 2,
+    "cpu_temperature": 85,
+    "temperature_hold_seconds": 10
+  }
+}

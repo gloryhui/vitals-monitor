@@ -1,0 +1,3983 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>服务器概览</title>
+    <script>
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem("server-info-theme") || "light";
+      } catch (_) {}
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f6fa;
+        --surface: #fff;
+        --soft: #f7f9fc;
+        --line: #e4eaf1;
+        --text: #1d2c3e;
+        --muted: #708198;
+        --blue: #3379cf;
+        --green: #128266;
+        --amber: #a97011;
+        --red: #cb4a50;
+        --violet: #8663ca;
+        --track: #eaf0f6;
+        --shadow: 0 3px 16px #243c5910;
+        --sans:
+          system-ui, -apple-system, "Segoe UI", "PingFang SC",
+          "Microsoft YaHei", sans-serif;
+        --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #101720;
+        --surface: #18222e;
+        --soft: #1b2836;
+        --line: #2a394b;
+        --text: #e2eaf3;
+        --muted: #95a8bd;
+        --blue: #79b4ff;
+        --green: #58d2b0;
+        --amber: #e7ba68;
+        --red: #ff8a91;
+        --violet: #b49ae9;
+        --track: #293849;
+        --shadow: 0 3px 16px #00000015;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.6 var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      select,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      button,
+      select {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 7px 11px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover,
+      select:hover {
+        border-color: var(--blue);
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 3px;
+      }
+      button svg {
+        width: 16px;
+        height: 16px;
+        vertical-align: -3px;
+        margin-right: 6px;
+      }
+      a {
+        color: var(--blue);
+      }
+      .wrap {
+        max-width: 1280px;
+        margin: auto;
+        padding: 0 32px 30px;
+      }
+      .boot {
+        display: grid;
+        place-items: center;
+        min-height: 60vh;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .login-gate {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .login-card {
+        width: min(360px, 100%);
+        padding: 30px 28px 24px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+      }
+      .login-card h1 {
+        margin: 0 0 4px;
+        font-size: 19px;
+        letter-spacing: 0.02em;
+      }
+      .login-hint {
+        margin: 0 0 20px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .login-field {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .login-field input {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--soft);
+        color: var(--text);
+      }
+      .login-field input:focus {
+        outline: 2px solid color-mix(in srgb, var(--blue) 40%, transparent);
+        outline-offset: 1px;
+        border-color: var(--blue);
+      }
+      .login-error {
+        margin: 0 0 12px;
+        font-size: 12px;
+        color: var(--red);
+      }
+      .login-submit {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        background: var(--blue);
+        color: #fff;
+        font-weight: 500;
+      }
+      .login-submit:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+      .login-card .login-hint:last-child {
+        margin: 14px 0 0;
+        text-align: center;
+      }
+      .who {
+        font-size: 12px;
+        color: var(--muted);
+        max-width: 12em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .topbar {
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        gap: 16px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 650;
+        font-size: 15px;
+        letter-spacing: 0.05em;
+      }
+      .brand-icon {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        background: var(--blue);
+        color: var(--surface);
+        border-radius: 10px;
+      }
+      .brand-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .top-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .clock {
+        text-align: right;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .clock strong {
+        display: block;
+        font-weight: 550;
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+      .hero {
+        padding: 30px 0 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 22px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0 0 3px;
+      }
+      h1 {
+        font-size: 29px;
+        letter-spacing: -0.04em;
+        line-height: 1.3;
+        margin: 0 0 8px;
+        font-weight: 700;
+      }
+      .subtitle {
+        color: var(--muted);
+        margin: 0;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .actions label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .actions select {
+        font-size: 12px;
+      }
+      .live {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12px;
+        color: var(--green);
+        white-space: nowrap;
+      }
+      .live i {
+        width: 7px;
+        height: 7px;
+        background: currentColor;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 9%, transparent);
+      }
+      .live.warn {
+        color: var(--amber);
+      }
+      .live.bad {
+        color: var(--red);
+      }
+      .pill {
+        display: inline-block;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 2px 9px;
+        font-size: 11px;
+        white-space: nowrap;
+        color: var(--muted);
+      }
+      .good {
+        color: var(--green);
+      }
+      .warn {
+        color: var(--amber);
+      }
+      .bad {
+        color: var(--red);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .mono {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .metric,
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        box-shadow: var(--shadow);
+        min-width: 0;
+      }
+      .metric {
+        padding: 20px 21px;
+        position: relative;
+        overflow: hidden;
+      }
+      .metric-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .metric-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: var(--blue);
+        background: color-mix(in srgb, var(--blue) 8%, transparent);
+      }
+      .metric-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+      .metric:nth-child(2) .metric-icon {
+        color: var(--green);
+        background: color-mix(in srgb, var(--green) 8%, transparent);
+      }
+      .metric:nth-child(3) .metric-icon {
+        color: var(--amber);
+        background: color-mix(in srgb, var(--amber) 8%, transparent);
+      }
+      .metric:nth-child(4) .metric-icon {
+        color: var(--violet);
+        background: color-mix(in srgb, var(--violet) 8%, transparent);
+      }
+      .metric-value {
+        font: 500 36px/1.4 var(--mono);
+        letter-spacing: -0.05em;
+        margin: 12px 0 3px;
+        white-space: nowrap;
+      }
+      .metric-value small {
+        font: 400 14px var(--sans);
+        color: var(--muted);
+        letter-spacing: 0;
+        margin-left: 4px;
+      }
+      .metric-sub {
+        font-size: 11px;
+        color: var(--muted);
+        min-height: 18px;
+        overflow-wrap: anywhere;
+      }
+      .meter {
+        height: 6px;
+        background: var(--track);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 14px;
+      }
+      .meter i {
+        display: block;
+        height: 100%;
+        border-radius: 8px;
+        background: var(--blue);
+        transition: width 0.5s ease;
+        width: 0;
+      }
+      .meter.green i {
+        background: var(--green);
+      }
+      .meter.warning i {
+        background: var(--amber);
+      }
+      .meter.danger i {
+        background: var(--red);
+      }
+      .network-value {
+        font-size: 23px;
+        letter-spacing: -0.04em;
+        margin-top: 15px;
+      }
+      .network-value small {
+        font-size: 11px;
+      }
+      .network-up {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 5px;
+      }
+      .strip {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 15px 4px 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .strip b {
+        font-weight: 500;
+        color: var(--text);
+        margin-left: 5px;
+      }
+      .section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin: 28px 0 13px;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+      .section-title p {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 2px 0 0;
+      }
+      .segmented {
+        display: flex;
+        gap: 3px;
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+      .segmented button {
+        border: 0;
+        background: transparent;
+        border-radius: 7px;
+        font-size: 11px;
+        padding: 4px 10px;
+        color: var(--muted);
+      }
+      .segmented button[aria-pressed="true"] {
+        background: var(--soft);
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .charts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .chart {
+        padding: 17px 20px 10px;
+      }
+      .chart-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .chart-range {
+        font-size: 11px;
+        padding: 3px 6px;
+        border-radius: 7px;
+        background: var(--soft);
+        color: var(--muted);
+      }
+      .chart-zoom {
+        display: inline-grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        border-radius: 7px;
+        border: 1px solid var(--line);
+        background: var(--soft);
+        color: var(--muted);
+      }
+      .chart-zoom svg {
+        width: 13px;
+        height: 13px;
+      }
+      .chart-zoom:hover {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      body.modal-open {
+        overflow: hidden;
+      }
+      .chart-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: grid;
+        place-items: center;
+        padding: 3vh 3vw;
+        background: #0b16228c;
+      }
+      .chart-modal[hidden],
+      .chart-modal-empty[hidden] {
+        display: none;
+      }
+      .chart-modal-card {
+        width: min(1120px, 94vw);
+        height: min(720px, 88vh);
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .chart-modal-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .chart-modal-head h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .chart-modal-tools {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto;
+      }
+      .chart-modal-frame {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        padding: 10px 16px 12px;
+      }
+      .chart-modal-frame canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .chart-modal-empty {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .chart-modal-close {
+        padding: 5px 12px;
+        border-radius: 8px;
+      }
+      .chart h3 {
+        font-size: 12px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .legend {
+        display: flex;
+        gap: 12px;
+        font: 11px var(--mono);
+        color: var(--muted);
+      }
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .legend i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--blue);
+      }
+      .legend .second {
+        background: var(--green);
+      }
+      .chart-frame {
+        height: 142px;
+        position: relative;
+        margin-top: 8px;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .chart-empty {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        color: var(--muted);
+        pointer-events: none;
+      }
+      .chart-empty[hidden] {
+        display: none;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .panel-head {
+        padding: 18px 21px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .panel-head h2 {
+        font-size: 14px;
+      }
+      .panel-body {
+        padding: 0 21px 20px;
+      }
+      .group-status {
+        font-size: 10px;
+        color: var(--muted);
+        text-align: right;
+      }
+      .group-status.bad {
+        color: var(--amber);
+      }
+      .big-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+      }
+      .big-row strong {
+        font-size: 22px;
+        font-weight: 550;
+        letter-spacing: -0.03em;
+      }
+      .big-row span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 9px 12px;
+        margin: 0;
+        font-size: 12px;
+      }
+      .kv dt {
+        color: var(--muted);
+      }
+      .kv dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      .detail-line {
+        font-size: 12px;
+        color: var(--muted);
+        padding: 12px 0;
+      }
+      .memory-note {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 12px 0 0;
+      }
+      .inline-stats {
+        display: flex;
+        gap: 26px;
+        flex-wrap: wrap;
+        margin: 17px 0 12px;
+      }
+      .inline-stats div {
+        display: grid;
+        gap: 2px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .inline-stats b {
+        font: 500 14px var(--mono);
+        color: var(--text);
+      }
+      details {
+        border-top: 1px solid var(--line);
+        margin-top: 14px;
+        padding-top: 11px;
+      }
+      summary {
+        font-size: 11px;
+        color: var(--muted);
+        cursor: pointer;
+        user-select: none;
+      }
+      details .kv {
+        margin-top: 12px;
+      }
+      .core-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 13px;
+      }
+      .core {
+        padding: 7px 9px;
+        background: var(--soft);
+        border-radius: 8px;
+        font: 10px var(--mono);
+      }
+      .core div {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+      }
+      .core span {
+        color: var(--muted);
+      }
+      .core .meter {
+        height: 3px;
+        margin-top: 7px;
+      }
+      .modules {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .module {
+        font-size: 11px;
+        background: var(--soft);
+        padding: 9px 12px;
+        border-radius: 8px;
+        color: var(--muted);
+      }
+      .module b {
+        font-weight: 500;
+        color: var(--text);
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      .storage-layout {
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        gap: 28px;
+      }
+      .storage-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 13px;
+      }
+      .storage-label h3,
+      .small-heading {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+        margin: 0;
+      }
+      .filesystem {
+        margin-bottom: 19px;
+      }
+      .filesystem:last-child {
+        margin-bottom: 0;
+      }
+      .fs-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .fs-title b {
+        font-weight: 500;
+      }
+      .filesystem .meter {
+        height: 5px;
+        margin: 7px 0;
+      }
+      .fs-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .disk {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 13px 14px;
+        margin-bottom: 10px;
+      }
+      .disk:last-child {
+        margin-bottom: 0;
+      }
+      .disk-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+      .disk-name {
+        font-size: 12px;
+        font-weight: 550;
+        overflow-wrap: anywhere;
+      }
+      .disk-device {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .disk-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px 18px;
+        margin-top: 12px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .disk-stats b {
+        font-weight: 500;
+        color: var(--text);
+      }
+      .disk details {
+        margin-top: 10px;
+        padding-top: 7px;
+      }
+      .disk .kv {
+        font-size: 11px;
+        grid-template-columns: 110px 1fr;
+        gap: 5px 10px;
+      }
+      .empty {
+        font-size: 12px;
+        color: var(--muted);
+        padding: 15px 0;
+      }
+      .docker-summary {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+      .docker-summary strong {
+        font: 500 25px var(--mono);
+      }
+      .docker-summary span {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .container-list {
+        max-height: 275px;
+        overflow: auto;
+        scrollbar-width: thin;
+      }
+      .container-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-top: 1px solid var(--line);
+        padding: 9px 0;
+        font-size: 11px;
+      }
+      .container-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--muted);
+        border-radius: 50%;
+        flex: none;
+      }
+      .container-dot.good {
+        background: var(--green);
+      }
+      .container-dot.bad {
+        background: var(--red);
+      }
+      .container-dot.warn {
+        background: var(--amber);
+      }
+      .container-name {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .container-state {
+        font-size: 10px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .search {
+        width: 100%;
+        font-size: 11px;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+      }
+      .docker-space {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 9px;
+        margin-top: 16px;
+      }
+      .docker-space div {
+        padding: 9px 10px;
+        background: var(--soft);
+        border-radius: 8px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .docker-space b {
+        display: block;
+        font: 500 12px var(--mono);
+        color: var(--text);
+        margin-top: 3px;
+      }
+      .alerts {
+        margin-top: 20px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+        padding: 14px 20px;
+      }
+      .alerts h2 {
+        font-size: 12px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .alerts ul {
+        list-style: none;
+        padding: 0;
+        margin: 9px 0 0;
+        display: grid;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .alerts li:before {
+        content: "·";
+        margin-right: 8px;
+      }
+      .alerts .all-clear {
+        margin: 5px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stale-data {
+        opacity: 0.55;
+      }
+      .banner {
+        border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--line));
+        background: color-mix(in srgb, var(--amber) 6%, var(--surface));
+        border-radius: 10px;
+        color: var(--amber);
+        padding: 10px 15px;
+        font-size: 12px;
+        margin-bottom: 15px;
+      }
+      .banner[hidden] {
+        display: none;
+      }
+      footer {
+        margin-top: 27px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .collection-info {
+        margin: 0;
+        border: 0;
+        padding: 0;
+      }
+      .collection-info summary {
+        font-size: 10px;
+      }
+      .collection-info p {
+        max-width: 550px;
+        margin: 8px 0 0;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      @media (min-width: 1500px) {
+        .wrap {
+          max-width: 1380px;
+        }
+        .chart-frame {
+          height: 165px;
+        }
+      }
+      @media (max-width: 950px) {
+        .wrap {
+          padding: 0 22px 24px;
+        }
+        .metrics {
+          gap: 10px;
+        }
+        .metric {
+          padding: 15px;
+        }
+        .metric-value {
+          font-size: 29px;
+        }
+        .network-value {
+          font-size: 20px;
+        }
+        .hero {
+          align-items: flex-start;
+        }
+        .actions {
+          justify-content: flex-end;
+          max-width: 270px;
+        }
+        .storage-layout {
+          gap: 20px;
+        }
+        .core-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 650px) {
+        .wrap {
+          padding: 0 16px 22px;
+        }
+        .topbar {
+          height: 66px;
+        }
+        .brand {
+          font-size: 13px;
+        }
+        .top-right {
+          gap: 12px;
+        }
+        .clock {
+          font-size: 10px;
+        }
+        .clock #lunarClock {
+          display: none;
+        }
+        .hero {
+          padding: 23px 0 18px;
+          display: block;
+        }
+        h1 {
+          font-size: 26px;
+        }
+        .actions {
+          max-width: none;
+          margin-top: 16px;
+          justify-content: flex-start;
+        }
+        .metrics {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .metric {
+          padding: 15px;
+        }
+        .metric-value {
+          font-size: 30px;
+          margin-top: 9px;
+        }
+        .network-value {
+          font-size: 21px;
+        }
+        .metric-sub {
+          font-size: 10px;
+        }
+        .strip {
+          font-size: 10px;
+          gap: 7px 15px;
+          justify-content: flex-start;
+        }
+        .charts,
+        .grid,
+        .storage-layout {
+          grid-template-columns: 1fr;
+        }
+        .chart {
+          padding: 15px 15px 9px;
+        }
+        .chart-frame {
+          height: 135px;
+        }
+        .section-title {
+          margin-top: 24px;
+        }
+        .panel-head {
+          padding: 17px 17px 13px;
+        }
+        .panel-body {
+          padding: 0 17px 18px;
+        }
+        .storage-layout {
+          gap: 24px;
+        }
+        .legend {
+          font-size: 10px;
+          gap: 9px;
+        }
+        .core-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .alerts {
+          padding: 13px 16px;
+        }
+        .subtitle {
+          font-size: 11px;
+        }
+        .docker-space {
+          gap: 6px;
+        }
+        .docker-space div {
+          padding: 8px;
+        }
+        .metric-icon {
+          width: 24px;
+          height: 24px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+
+      .temperature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+      }
+      .temperature-card {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 13px 14px;
+        min-width: 0;
+      }
+      .temperature-card h3 {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+        margin: 0;
+      }
+      .temperature-reading {
+        font: 500 25px/1.5 var(--mono);
+        margin: 8px 0 4px;
+        letter-spacing: -0.04em;
+      }
+      .temperature-reading small {
+        font: 12px var(--sans);
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .temperature-card .group-status {
+        font-size: 9px;
+        text-align: left;
+      }
+      .temperature-source {
+        font-size: 10px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+        margin-top: 3px;
+      }
+      .temperature-legend {
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        font-size: 10px;
+      }
+      .legend .series-ccd {
+        background: var(--green);
+      }
+      .legend .series-nvme {
+        background: var(--amber);
+      }
+      .legend .series-nvme1 {
+        background: var(--violet);
+      }
+      .legend .series-nvme2 {
+        background: var(--red);
+      }
+      .legend .series-hdd {
+        background: #17899b;
+      }
+      @media (max-width: 650px) {
+        .temperature-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .temperature-card {
+          padding: 12px;
+        }
+        .temperature-reading {
+          font-size: 23px;
+        }
+      }
+    </style>
+    <style>
+      .resource-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .resource-grid > .full {
+        grid-column: 1/-1;
+      }
+      .resource-overview .metric-value {
+        margin: 0 0 2px;
+      }
+      .resource-overview .meter {
+        margin-top: 11px;
+      }
+      .embedded-chart {
+        border-top: 1px solid var(--line);
+        padding-top: 13px;
+        margin-top: 17px;
+        min-width: 0;
+      }
+      .embedded-chart h3 {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        margin: 0;
+      }
+      .resource-overview + .embedded-chart {
+        margin-bottom: 15px;
+      }
+      .memory-overview {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .memory-amount strong {
+        font: 500 16px var(--mono);
+      }
+      .memory-amount span {
+        font-size: 11px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      #cpuPanel .detail-line {
+        padding-top: 1px;
+      }
+      #temperaturePanel .embedded-chart {
+        margin-top: 16px;
+      }
+      #temperaturePanel .chart-frame {
+        height: 155px;
+      }
+      #storagePanel .embedded-chart {
+        margin: 0;
+        padding: 0 0 15px;
+        border-top: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .network-overview {
+        display: flex;
+        align-items: baseline;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+      .network-overview .metric-value {
+        margin: 0;
+      }
+      .network-overview #netSub {
+        width: 100%;
+      }
+      #networkInfo {
+        margin-top: 17px;
+      }
+      .system-details {
+        padding: 15px 21px;
+      }
+      .system-details > summary {
+        font-size: 12px;
+        color: var(--text);
+        font-weight: 550;
+      }
+      .system-details > summary .group-status {
+        float: right;
+        font-weight: 400;
+      }
+      .system-details > .panel-body {
+        padding: 17px 0 0;
+      }
+      .system-details .kv {
+        grid-template-columns: 85px minmax(0, 1fr) 85px minmax(0, 1fr);
+      }
+      .history-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .history-control select {
+        font-size: 11px;
+        padding: 5px 8px;
+      }
+      @media (max-width: 650px) {
+        .resource-grid {
+          grid-template-columns: 1fr;
+        }
+        .resource-toolbar {
+          align-items: flex-end;
+        }
+        .resource-toolbar h2 {
+          font-size: 14px;
+        }
+        .resource-toolbar p {
+          font-size: 9px;
+          max-width: 180px;
+        }
+        .history-control {
+          display: block;
+          font-size: 10px;
+        }
+        .history-control select {
+          display: block;
+          max-width: 145px;
+          margin-top: 3px;
+        }
+        .system-details .kv {
+          grid-template-columns: 80px minmax(0, 1fr);
+        }
+        .memory-amount strong {
+          font-size: 14px;
+        }
+      }
+    </style>
+    <style>
+      .hero h1 small {
+        font-size: 16px;
+        letter-spacing: 0;
+        color: var(--muted);
+        font-weight: 400;
+        margin-left: 7px;
+      }
+      .basics-panel {
+        margin: 2px 0 15px;
+      }
+      .basics-panel .panel-head {
+        padding-bottom: 10px;
+      }
+      .basics-panel h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .basics-grid {
+        padding: 0 21px 20px;
+        display: grid;
+        grid-template-columns: 1.2fr 1.6fr 1fr 1.2fr;
+        gap: 15px 24px;
+      }
+      .basics-grid > div {
+        display: grid;
+        align-content: start;
+        gap: 3px;
+        min-width: 0;
+      }
+      .basics-grid span {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .basics-grid strong {
+        font-size: 12px;
+        line-height: 1.7;
+        font-weight: 500;
+        overflow-wrap: anywhere;
+      }
+      .alerts {
+        margin: 0 0 15px;
+      }
+      .services-panel {
+        margin: 0 0 22px;
+      }
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .service-card {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 13px;
+        min-width: 0;
+      }
+      .service-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12px;
+        font-weight: 550;
+      }
+      .service-title i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        flex: none;
+      }
+      .service-title.bad i {
+        background: var(--red);
+      }
+      .service-title.warn i {
+        background: var(--amber);
+      }
+      .service-result {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 11px;
+      }
+      .service-target {
+        font-size: 10px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+        margin-top: 4px;
+      }
+      .service-card .service-failures {
+        font-size: 10px;
+        color: var(--red);
+        margin-top: 3px;
+      }
+      .process-ranking {
+        margin-top: 16px;
+        padding-top: 13px;
+        border-top: 1px solid var(--line);
+      }
+      .rank-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .rank-head h3 {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        margin: 0;
+      }
+      .process-head,
+      .process-row {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) 72px 74px;
+        gap: 9px;
+        align-items: center;
+        font-size: 10px;
+        padding: 6px 0;
+      }
+      .process-head {
+        color: var(--muted);
+        font-size: 9px;
+      }
+      .process-row {
+        border-top: 1px solid var(--line);
+      }
+      .process-row .name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .process-row span:nth-last-child(-n + 2),
+      .process-head span:nth-last-child(-n + 2) {
+        text-align: right;
+      }
+      .process-basis {
+        font-size: 9px;
+        color: var(--muted);
+        margin-top: 7px;
+      }
+      .events-panel {
+        margin-top: 17px;
+      }
+      .event-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 11px 0;
+        border-top: 1px solid var(--line);
+        font-size: 11px;
+      }
+      .event-row:first-child {
+        border-top: 0;
+      }
+      .event-phase {
+        font-size: 10px;
+        padding: 1px 7px;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        white-space: nowrap;
+      }
+      .event-content {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .event-meta {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      #olderEvents {
+        font-size: 11px;
+        margin-top: 12px;
+      }
+      #cpuPanel details .kv {
+        margin-bottom: 10px;
+      }
+      .storage-layout.no-smart {
+        grid-template-columns: 1fr;
+      }
+      #networkPanel.solo {
+        grid-column: 1/-1;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 1000px) {
+        .basics-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .services-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 650px) {
+        .hero h1 small {
+          font-size: 13px;
+        }
+        .basics-grid {
+          padding: 0 17px 17px;
+          gap: 13px 17px;
+        }
+        .basics-grid strong {
+          font-size: 11px;
+        }
+        .services-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .service-card {
+          padding: 10px;
+        }
+        .service-title {
+          font-size: 11px;
+        }
+        .service-result {
+          font-size: 10px;
+          flex-wrap: wrap;
+        }
+        .process-head,
+        .process-row {
+          grid-template-columns: 35px minmax(0, 1fr) 60px 64px;
+          gap: 6px;
+          font-size: 9px;
+        }
+        .rank-head {
+          flex-wrap: wrap;
+        }
+        .basics-panel .panel-head {
+          align-items: flex-start;
+        }
+        .basics-panel h2 {
+          font-size: 12px;
+          flex-wrap: wrap;
+        }
+        .basics-panel .group-status {
+          font-size: 9px;
+        }
+      }
+    </style>
+    <style>
+      .hero > div:first-child {
+        min-width: 0;
+      }
+      #pageHostname {
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      style="display: none"
+      aria-hidden="true"
+    >
+      <defs>
+        <symbol id="i-server" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="7" rx="2"></rect>
+          <rect x="3" y="14" width="18" height="7" rx="2"></rect>
+          <path d="M7 6.5h.01M7 17.5h.01M12 6.5h5M12 17.5h5"></path>
+        </symbol>
+        <symbol id="i-cpu" viewBox="0 0 24 24">
+          <rect x="5" y="5" width="14" height="14" rx="3"></rect>
+          <path d="M9 1v4m6-4v4M9 19v4m6-4v4M1 9h4m-4 6h4m14-6h4m-4 6h4"></path>
+          <rect x="9" y="9" width="6" height="6" rx="1"></rect>
+        </symbol>
+        <symbol id="i-memory" viewBox="0 0 24 24">
+          <rect x="2" y="5" width="20" height="13" rx="2"></rect>
+          <path d="M6 9v5m4-5v5m4-5v5m4-5v5M6 18v3m4-3v3m4-3v3m4-3v3"></path>
+        </symbol>
+        <symbol id="i-temp" viewBox="0 0 24 24">
+          <path d="M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0Z"></path>
+          <path d="M12 8v10"></path>
+        </symbol>
+        <symbol id="i-network" viewBox="0 0 24 24">
+          <path d="M7 3v17m-4-4 4 4 4-4M17 21V4m-4 4 4-4 4 4"></path>
+        </symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24">
+          <path d="M20 7v5h-5M4 17v-5h5"></path>
+          <path d="M6 6a8 8 0 0 1 13 3M5 15a8 8 0 0 0 13 3"></path>
+        </symbol>
+        <symbol id="i-theme" viewBox="0 0 24 24">
+          <path d="M21 13a9 9 0 0 1-10-10A9 9 0 1 0 21 13Z"></path>
+        </symbol>
+        <symbol id="i-expand" viewBox="0 0 24 24">
+          <path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"></path>
+        </symbol>
+      </defs>
+    </svg>
+    <div class="boot" id="bootScreen">正在验证登录状态…</div>
+    <section class="login-gate" id="loginGate" hidden>
+      <form class="login-card" id="loginForm">
+        <h1>服务器状态</h1>
+        <p class="login-hint">请使用管理员账号登录后查看。</p>
+        <label class="login-field" for="loginUser"
+          >用户名<input
+            id="loginUser"
+            name="username"
+            autocomplete="username"
+            autocapitalize="off"
+            spellcheck="false"
+            required
+          />
+        </label>
+        <label class="login-field" for="loginPass"
+          >密码<input
+            id="loginPass"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+        <p class="login-error" id="loginError" role="alert" hidden></p>
+        <button class="login-submit" id="loginSubmit" type="submit">登录</button>
+        <p class="login-hint" id="loginNote">
+          登录状态仅保存在本浏览器，会话到期后需要重新登录。
+        </p>
+      </form>
+    </section>
+    <div class="wrap" id="appRoot" hidden>
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-icon"
+            ><svg fill="none" stroke="currentColor" stroke-width="1.6">
+              <use href="#i-server"></use></svg></span
+          >服务器状态
+        </div>
+        <div class="top-right">
+          <div class="clock">
+            <strong id="clock">—</strong><span id="lunarClock"></span>
+          </div>
+          <span class="who" id="userName"></span>
+          <button id="logoutButton" type="button" title="退出登录">退出</button>
+          <button id="themeToggle" type="button" aria-label="切换深色主题">
+            <svg fill="none" stroke="currentColor" stroke-width="1.7">
+              <use href="#i-theme"></use></svg
+            ><span id="themeLabel">深色</span>
+          </button>
+        </div>
+      </header>
+      <section class="hero">
+        <div>
+          <p class="eyebrow" id="hostLabel">本机监控</p>
+          <h1><span id="pageHostname">服务器</span> <small>状态概览</small></h1>
+          <p class="subtitle" id="hostMeta">正在读取系统信息…</p>
+        </div>
+        <div class="actions">
+          <span class="live warn" id="liveState" role="status"
+            ><i></i><span>连接中</span></span
+          ><label for="refreshInterval" class="sr-only">实时指标刷新间隔</label
+          ><select id="refreshInterval" aria-label="实时指标刷新间隔">
+            <option value="1000">每 1 秒刷新</option>
+            <option value="5000">每 5 秒刷新</option>
+            <option value="10000">每 10 秒刷新</option>
+            <option value="30000">每 30 秒刷新</option></select
+          ><button id="refreshButton" type="button" title="刷新当前缓存数据">
+            <svg fill="none" stroke="currentColor" stroke-width="1.7">
+              <use href="#i-refresh"></use></svg
+            >刷新
+          </button>
+        </div>
+      </section>
+      <div class="banner" id="connectionBanner" role="status" hidden=""></div>
+
+      <section class="panel basics-panel" id="serverBasics">
+        <div class="panel-head">
+          <h2>
+            服务器基本信息
+            <span class="pill" id="environmentLabel">检测中</span>
+          </h2>
+          <span class="group-status" id="lastUpdated">等待采样</span>
+        </div>
+        <div class="basics-grid">
+          <div><span>操作系统</span><strong id="basicOS">—</strong></div>
+          <div><span>处理器</span><strong id="basicCPU">—</strong></div>
+          <div><span>内存配置</span><strong id="basicMemory">—</strong></div>
+          <div><span>网络地址</span><strong id="basicNetwork">—</strong></div>
+          <div><span>内核 / 架构</span><strong id="basicKernel">—</strong></div>
+          <div><span>运行时间</span><strong id="uptime">—</strong></div>
+          <div id="basicBoardRow">
+            <span>主板</span><strong id="basicBoard">—</strong>
+          </div>
+          <div>
+            <span>时区 / 环境</span><strong id="basicEnvironment">—</strong>
+          </div>
+        </div>
+      </section>
+      <section class="alerts" id="alerts" aria-labelledby="alertsTitle">
+        <h2 id="alertsTitle">
+          当前状态 <span class="pill" id="alertCount">检查中</span>
+        </h2>
+        <ul id="alertList"></ul>
+        <p class="all-clear" id="allClear">正在读取监控数据…</p>
+      </section>
+      <section class="panel services-panel" id="servicesPanel">
+        <div class="panel-head">
+          <h2>
+            服务检查 <span class="pill" id="servicesSummary">读取中</span>
+          </h2>
+          <span class="group-status" data-group="services"></span>
+        </div>
+        <div class="panel-body">
+          <div class="services-grid" id="servicesGrid">
+            <div class="empty">正在检查服务…</div>
+          </div>
+          <p class="memory-note" id="servicePolicy">
+            连续失败和恢复确认后记录事件
+          </p>
+        </div>
+      </section>
+
+      <div class="section-title resource-toolbar">
+        <div>
+          <h2>资源状态</h2>
+          <p id="historyHint">每秒采样 · 保留 90 天</p>
+        </div>
+        <label class="history-control"
+          >趋势范围
+          <select id="historyRange" aria-label="趋势时间范围">
+            <option value="10">最近 10 分钟</option>
+            <option value="30">最近 30 分钟</option>
+            <option value="60">最近 1 小时</option>
+            <option value="360">最近 6 小时</option>
+            <option value="1440">最近 24 小时</option>
+            <option value="10080">最近 7 天</option>
+            <option value="43200">最近 30 天</option>
+            <option value="129600">最近 90 天</option>
+          </select></label
+        >
+      </div>
+      <div class="resource-grid" id="resourceLayout">
+        <section class="panel" id="cpuPanel">
+          <div class="panel-head">
+            <h2>CPU</h2>
+            <span class="pill" id="cpuTopology">—</span>
+          </div>
+          <div class="panel-body">
+            <div class="resource-overview live-sample">
+              <div class="metric-value">
+                <span id="cpuValue">—</span><small>%</small>
+              </div>
+              <div class="metric-sub" id="cpuSub">正在采样…</div>
+              <div class="meter" id="cpuMeter"><i></i></div>
+            </div>
+            <article class="embedded-chart">
+              <div class="chart-head">
+                <h3>使用率趋势</h3>
+                <div class="legend">
+                  <span><i></i>CPU <b id="legendCpu">—</b></span>
+                </div>
+                <select class="chart-range" data-chart="chartUsage" aria-label="CPU 趋势时间范围">
+                    <option value="10">10 分钟</option>
+                    <option value="30">30 分钟</option>
+                    <option value="60">1 小时</option>
+                    <option value="360">6 小时</option>
+                    <option value="1440">24 小时</option>
+                    <option value="10080">7 天</option>
+                    <option value="43200">30 天</option>
+                    <option value="129600">90 天</option>
+                </select>
+                <button class="chart-zoom" type="button" data-chart="chartUsage" aria-label="放大CPU 使用率趋势" title="放大查看">
+                  <svg fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-expand"></use></svg>
+                </button>
+              
+              </div>
+              <div class="chart-frame">
+                <canvas
+                  id="chartUsage"
+                  role="img"
+                  aria-label="CPU 使用率趋势"
+                ></canvas>
+                <div class="chart-empty" id="emptyUsage">正在积累采样数据…</div>
+              </div>
+            </article>
+            <section class="process-ranking">
+              <div class="rank-head">
+                <h3>CPU 占用前 5</h3>
+                <span class="group-status" data-group="processes"></span>
+              </div>
+              <div id="processCPU"><div class="empty">正在采样进程…</div></div>
+            </section>
+
+            <details>
+              <summary>频率与线程详情</summary>
+              <div class="detail-line" id="cpuModel">正在读取处理器信息…</div>
+              <dl class="kv">
+                <dt>当前平均频率</dt>
+                <dd class="mono" id="cpuFreq">—</dd>
+                <dt>系统负载</dt>
+                <dd class="mono" id="cpuLoad">—</dd>
+                <dt>温度传感器</dt>
+                <dd id="cpuSensors">—</dd>
+              </dl>
+              <div class="core-grid" id="coreGrid"></div>
+            </details>
+          </div>
+        </section>
+        <section class="panel" id="memoryPanel">
+          <div class="panel-head">
+            <h2>内存</h2>
+            <span class="pill" id="memorySpec">—</span>
+          </div>
+          <div class="panel-body">
+            <div class="resource-overview memory-overview live-sample">
+              <div class="metric-value">
+                <span id="memValue">—</span><small>%</small>
+              </div>
+              <div class="memory-amount">
+                <strong class="mono" id="memoryUsed">—</strong
+                ><span id="memoryTotal">—</span>
+              </div>
+            </div>
+            <div class="meter green" id="memMeter"><i></i></div>
+            <div class="embedded-chart">
+              <div class="chart-head">
+                <h3>使用率趋势</h3>
+                <div class="legend">
+                  <span><i class=""></i>内存 <b id="legendMem">—</b></span>
+                </div>
+                <select class="chart-range" data-chart="chartMemory" aria-label="内存趋势时间范围">
+                    <option value="10">10 分钟</option>
+                    <option value="30">30 分钟</option>
+                    <option value="60">1 小时</option>
+                    <option value="360">6 小时</option>
+                    <option value="1440">24 小时</option>
+                    <option value="10080">7 天</option>
+                    <option value="43200">30 天</option>
+                    <option value="129600">90 天</option>
+                </select>
+                <button class="chart-zoom" type="button" data-chart="chartMemory" aria-label="放大内存使用率趋势" title="放大查看">
+                  <svg fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-expand"></use></svg>
+                </button>
+              
+              </div>
+              <div class="chart-frame">
+                <canvas
+                  id="chartMemory"
+                  role="img"
+                  aria-label="内存使用率趋势"
+                ></canvas>
+                <div class="chart-empty" id="emptyMemory">
+                  正在积累采样数据…
+                </div>
+              </div>
+            </div>
+            <section class="process-ranking">
+              <div class="rank-head">
+                <h3>内存占用前 5</h3>
+                <span class="group-status" data-group="processes"></span>
+              </div>
+              <div id="processMemory">
+                <div class="empty">正在采样进程…</div>
+              </div>
+            </section>
+
+            <div class="inline-stats">
+              <div>可用内存<b id="memoryAvailable">—</b></div>
+              <div>文件缓存<b id="memoryCache">—</b></div>
+              <div>交换空间<b id="memorySwap">—</b></div>
+            </div>
+            <p class="memory-note">
+              可用内存包含可回收缓存；文件缓存可在程序需要时释放。
+            </p>
+            <details id="memoryModulesDetails">
+              <summary>内存条信息</summary>
+              <div class="modules" id="memoryModules">
+                <span class="muted">正在读取…</span>
+              </div>
+            </details>
+          </div>
+        </section>
+        <section class="panel full" id="temperaturePanel">
+          <div class="panel-head">
+            <h2>温度监测</h2>
+            <span class="pill" id="temperatureCount">读取中</span>
+          </div>
+          <div class="panel-body">
+            <div class="temperature-grid" id="temperatureGrid">
+              <div class="empty">正在读取温度…</div>
+            </div>
+            <p class="memory-note">
+              传感器每 5 秒更新，SMART
+              磁盘温度每分钟更新。趋势图取同类设备的最高温度；30
+              天及以上的范围按小时聚合，仍保留 3 个月。
+            </p>
+            <article class="embedded-chart">
+              <div class="chart-head">
+                <h3>温度</h3>
+                <div class="legend temperature-legend">
+                  <span><i></i>CPU <b id="legendTemp">—</b></span>
+                  <span><i class="series-ccd"></i>CCD</span>
+                  <span><i class="series-nvme"></i>NVMe</span>
+                  <span><i class="series-nvme1"></i>探头 1</span>
+                  <span><i class="series-nvme2"></i>探头 2</span>
+                  <span><i class="series-hdd"></i>硬盘</span>
+                </div>
+                <select class="chart-range" data-chart="chartTemp" aria-label="温度趋势时间范围">
+                    <option value="10">10 分钟</option>
+                    <option value="30">30 分钟</option>
+                    <option value="60">1 小时</option>
+                    <option value="360">6 小时</option>
+                    <option value="1440">24 小时</option>
+                    <option value="10080">7 天</option>
+                    <option value="43200">30 天</option>
+                    <option value="129600">90 天</option>
+                </select>
+                <button class="chart-zoom" type="button" data-chart="chartTemp" aria-label="放大温度趋势" title="放大查看">
+                  <svg fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-expand"></use></svg>
+                </button>
+              
+              </div>
+              <div class="chart-frame">
+                <canvas
+                  id="chartTemp"
+                  role="img"
+                  aria-label="CPU、CCD、NVMe 内部传感器及硬盘温度趋势"
+                ></canvas>
+                <div class="chart-empty" id="emptyTemp">正在读取温度…</div>
+              </div>
+            </article>
+          </div>
+        </section>
+        <section class="panel full" id="storagePanel">
+          <div class="panel-head">
+            <h2>存储</h2>
+            <span class="muted" style="font-size: 11px"
+              >容量与健康分开更新</span
+            >
+          </div>
+          <div class="panel-body storage-layout">
+            <article class="embedded-chart full">
+              <div class="chart-head">
+                <h3>磁盘读写</h3>
+                <div class="legend">
+                  <span><i></i>读取 <b id="legendRead">—</b></span
+                  ><span
+                    ><i class="second"></i>写入 <b id="legendWrite">—</b></span
+                  >
+                </div>
+                <select class="chart-range" data-chart="chartDisk" aria-label="磁盘读写趋势时间范围">
+                    <option value="10">10 分钟</option>
+                    <option value="30">30 分钟</option>
+                    <option value="60">1 小时</option>
+                    <option value="360">6 小时</option>
+                    <option value="1440">24 小时</option>
+                    <option value="10080">7 天</option>
+                    <option value="43200">30 天</option>
+                    <option value="129600">90 天</option>
+                </select>
+                <button class="chart-zoom" type="button" data-chart="chartDisk" aria-label="放大磁盘读写趋势" title="放大查看">
+                  <svg fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-expand"></use></svg>
+                </button>
+              
+              </div>
+              <div class="chart-frame">
+                <canvas
+                  id="chartDisk"
+                  role="img"
+                  aria-label="磁盘读取和写入速率趋势"
+                ></canvas>
+                <div class="chart-empty" id="emptyDisk">正在积累采样数据…</div>
+              </div>
+            </article>
+            <div id="filesystemColumn">
+              <div class="storage-label">
+                <h3>分区容量</h3>
+                <span class="group-status" data-group="filesystems"></span>
+              </div>
+              <div id="filesystems">
+                <div class="empty">正在读取分区容量…</div>
+              </div>
+            </div>
+            <div id="smartColumn">
+              <div class="storage-label">
+                <h3>磁盘健康</h3>
+                <span class="group-status" data-group="smart"></span>
+              </div>
+              <div id="disks"><div class="empty">正在读取 SMART…</div></div>
+            </div>
+          </div>
+        </section>
+        <section class="panel" id="networkPanel">
+          <div class="panel-head">
+            <h2>网络</h2>
+            <span class="group-status" data-group="network_info"></span>
+          </div>
+          <div class="panel-body">
+            <div class="network-overview live-sample">
+              <div class="metric-value network-value">
+                <small>↓</small> <span id="netRx">—</span>
+              </div>
+              <div class="network-up">
+                ↑ <span class="mono" id="netTx">—</span>
+              </div>
+              <div class="metric-sub" id="netSub">默认出口网卡</div>
+            </div>
+            <article class="embedded-chart">
+              <div class="chart-head">
+                <h3>网络流量</h3>
+                <div class="legend">
+                  <span><i></i>接收 <b id="legendRx">—</b></span
+                  ><span
+                    ><i class="second"></i>发送 <b id="legendTx">—</b></span
+                  >
+                </div>
+                <select class="chart-range" data-chart="chartNetwork" aria-label="网络流量趋势时间范围">
+                    <option value="10">10 分钟</option>
+                    <option value="30">30 分钟</option>
+                    <option value="60">1 小时</option>
+                    <option value="360">6 小时</option>
+                    <option value="1440">24 小时</option>
+                    <option value="10080">7 天</option>
+                    <option value="43200">30 天</option>
+                    <option value="129600">90 天</option>
+                </select>
+                <button class="chart-zoom" type="button" data-chart="chartNetwork" aria-label="放大网络流量趋势" title="放大查看">
+                  <svg fill="none" stroke="currentColor" stroke-width="1.7"><use href="#i-expand"></use></svg>
+                </button>
+              
+              </div>
+              <div class="chart-frame">
+                <canvas
+                  id="chartNetwork"
+                  role="img"
+                  aria-label="网络接收和发送速率趋势"
+                ></canvas>
+                <div class="chart-empty" id="emptyNetwork">
+                  正在积累采样数据…
+                </div>
+              </div>
+            </article>
+            <dl class="kv" id="networkInfo">
+              <dt>接口</dt>
+              <dd>正在读取…</dd>
+            </dl>
+          </div>
+        </section>
+        <section class="panel" id="containersPanel">
+          <div class="panel-head">
+            <h2>容器</h2>
+            <span class="group-status" data-group="containers"></span>
+          </div>
+          <div class="panel-body">
+            <div class="docker-summary">
+              <strong id="containerRunning">—</strong
+              ><span id="containerCounts">运行中</span>
+            </div>
+            <label for="containerSearch" class="sr-only">筛选容器名称</label
+            ><input
+              class="search"
+              id="containerSearch"
+              type="search"
+              placeholder="筛选容器名称…"
+              autocomplete="off"
+            />
+            <div class="container-list" id="containers">
+              <div class="empty">正在读取容器…</div>
+            </div>
+            <div class="docker-space" id="dockerSpace">
+              <div>镜像占用<b>—</b></div>
+              <div>构建缓存<b>—</b></div>
+              <div>数据卷<b>—</b></div>
+            </div>
+            <details>
+              <summary>
+                空间统计
+                <span class="group-status" data-group="docker_usage"></span>
+              </summary>
+              <dl class="kv" id="dockerSpaceDetails"></dl>
+              <p class="memory-note">可回收量由 Docker 估算，仅供查看。</p>
+            </details>
+          </div>
+        </section>
+      </div>
+      <section class="panel events-panel" id="eventsPanel">
+        <div class="panel-head">
+          <h2>
+            异常与恢复记录 <span class="pill" id="eventCount">读取中</span>
+          </h2>
+          <span class="group-status" id="eventsUpdated">每 5 秒更新</span>
+        </div>
+        <div class="panel-body">
+          <div id="eventList"><div class="empty">正在读取事件…</div></div>
+          <button type="button" id="olderEvents" hidden="">查看更早记录</button>
+          <p class="memory-note" id="eventPolicy">
+            持续异常只记录一次，恢复后单独记录。事件保留 90 天。
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        <span>Vitals · 轻量监控 · 只读展示 · <span id="footerHost">本机</span></span>
+        <details class="collection-info">
+          <summary>数据更新说明</summary>
+          <p>
+            CPU / 内存 / 网络流量 / 磁盘读写：1 秒；温度 / 进程排行：5 秒；容器
+            / 服务检查：15 秒；分区容量 / 网络信息：30 秒；磁盘健康：1
+            分钟；Docker 空间：5 分钟；系统与硬件：1
+            小时。页面隐藏时暂停请求。全部采样存入
+            SQLite 并压缩存储，<span id="retentionNote">保留 90 天后自动清理</span>；服务重启后仍可查询。长时间范围仅在展示时汇总，原始数据不变。
+            异常事件每 5 秒查询，按持续异常和恢复转换记录，不发送外部通知。
+          </p>
+        </details>
+      </footer>
+    </div>
+    <div class="chart-modal" id="chartModal" hidden>
+      <div class="chart-modal-card" role="dialog" aria-modal="true" aria-labelledby="chartModalTitle">
+        <div class="chart-modal-head">
+          <h3 id="chartModalTitle">趋势</h3>
+          <div class="chart-modal-tools">
+            <div class="legend" id="chartModalLegend"></div>
+            <select class="chart-range" id="chartModalRange" aria-label="放大视图时间范围"></select>
+            <button class="chart-modal-close" id="chartModalClose" type="button">关闭</button>
+          </div>
+        </div>
+        <div class="chart-modal-frame">
+          <canvas id="chartModalCanvas" role="img" aria-label="放大的趋势图"></canvas>
+          <div class="chart-modal-empty" id="chartModalEmpty" hidden>该时间范围暂无数据</div>
+        </div>
+      </div>
+    </div>
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const finite = (v) => typeof v === "number" && Number.isFinite(v);
+      const num = (v, digits = 1) => (finite(v) ? v.toFixed(digits) : "—");
+      const text = (id, value) => {
+        $(id).textContent = value ?? "—";
+      };
+      const fmtBytes = (v, digits = 1) => {
+        if (!finite(v)) return "—";
+        const units = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
+        let i = 0;
+        while (Math.abs(v) >= 1024 && i < units.length - 1) {
+          v /= 1024;
+          i++;
+        }
+        return `${v.toFixed(i === 0 ? 0 : digits)} ${units[i]}`;
+      };
+      const fmtRate = (v) => (finite(v) ? fmtBytes(v) + "/s" : "—");
+      const fmtTime = (value) =>
+        new Date(value).toLocaleTimeString("zh-CN", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      const duration = (seconds) => {
+        if (!finite(seconds)) return "—";
+        const days = Math.floor(seconds / 86400);
+        return `${days ? days + " 天 " : ""}${Math.floor((seconds % 86400) / 3600)} 小时 ${Math.floor((seconds % 3600) / 60)} 分钟`;
+      };
+      const el = (tag, cls, content) => {
+        const node = document.createElement(tag);
+        if (cls) node.className = cls;
+        if (content != null) node.textContent = content;
+        return node;
+      };
+      function meterLimit(kind) {
+        const limit = alertPolicy[kind + "_percent"];
+        return finite(limit) ? limit : 90;
+      }
+      function meter(id, value, kind) {
+        const limit = meterLimit(kind),
+          warn = Math.max(0, limit - 10);
+        const root = $(id);
+        root.querySelector("i").style.width =
+          `${finite(value) ? Math.max(0, Math.min(100, value)) : 0}%`;
+        root.classList.toggle("warning", value >= warn && value < limit);
+        root.classList.toggle("danger", value >= limit);
+      }
+      function kv(root, rows) {
+        const fragment = document.createDocumentFragment();
+        for (const [label, value] of rows) {
+          fragment.append(el("dt", "", label), el("dd", "", value ?? "—"));
+        }
+        root.replaceChildren(fragment);
+      }
+      let fast = null,
+        groups = {},
+        overviewReceived = 0,
+        fastReceived = 0,
+        fastError = false,
+        overviewError = false;
+      let eventFeed = null,
+        eventRows = [],
+        eventCursor = null,
+        olderLoaded = false,
+        eventQueryError = false,
+        eventReceived = 0,
+        alertPolicy = {},
+        temperatureKeys = new Set([
+          "temp",
+          "ccd",
+          "nvme",
+          "nvme_s1",
+          "nvme_s2",
+          "hdd",
+        ]);
+      let liveHistory = [],
+        serverPoints = new Map(),
+        chartRanges = {},
+        storageError = false,
+        serverOffset = 0,
+        serviceStarted = null,
+        globalRange = 10,
+        retentionDays = 90,
+        refreshMs = 1000;
+      let clockTimer,
+        authUser = null,
+        sessionToken = null;
+      try {
+        sessionToken = localStorage.getItem("server-info-session");
+        if (!sessionToken || sessionToken.length < 16) sessionToken = null;
+      } catch (_) {}
+      try {
+        const saved = Number(localStorage.getItem("server-info-refresh"));
+        if ([1000, 5000, 10000, 30000].includes(saved)) refreshMs = saved;
+      } catch (_) {}
+      $("refreshInterval").value = String(refreshMs);
+      function syncTheme() {
+        const dark = document.documentElement.dataset.theme === "dark";
+        text("themeLabel", dark ? "亮色" : "深色");
+        $("themeToggle").setAttribute(
+          "aria-label",
+          dark ? "切换亮色主题" : "切换深色主题",
+        );
+      }
+      syncTheme();
+      $("themeToggle").addEventListener("click", () => {
+        const next =
+          document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem("server-info-theme", next);
+        } catch (_) {}
+        syncTheme();
+        drawCharts();
+      });
+      function groupState(name) {
+        const group = groups[name];
+        if (!group) return { data: null, stale: true, error: null, age: null };
+        const age = finite(group.age_seconds)
+          ? group.age_seconds + (performance.now() - overviewReceived) / 1000
+          : null;
+        const stale =
+          overviewError ||
+          group.stale ||
+          age == null ||
+          age > Math.max(15, group.interval_seconds * 2.5);
+        return { ...group, age, stale };
+      }
+      function groupData(name, fresh = false) {
+        const g = groupState(name);
+        return fresh && g.stale ? null : g.data;
+      }
+      function groupStatus(name) {
+        const g = groupState(name);
+        const interval = g.interval_seconds;
+        const cycle =
+          interval >= 3600
+            ? "每小时"
+            : interval >= 60
+              ? `每 ${interval / 60} 分钟`
+              : `每 ${interval || "—"} 秒`;
+        if (g.available === false) return "当前环境不提供";
+        if (!g.data) return g.error || overviewError ? "读取失败" : "读取中…";
+        if (g.stale)
+          return `数据已过期${g.updated_at ? " · " + fmtTime(g.updated_at) : ""}`;
+        return `${cycle} · ${fmtTime(g.updated_at)} 更新`;
+      }
+      function renderFreshness() {
+        for (const node of document.querySelectorAll("[data-group]")) {
+          const name = node.dataset.group;
+          node.textContent = groupStatus(name);
+          node.classList.toggle("bad", groupState(name).stale);
+          node.title = groupState(name).error || "";
+        }
+        for (const node of document.querySelectorAll("[data-temp-group]"))
+          node.classList.toggle(
+            "stale-data",
+            groupState(node.dataset.tempGroup).stale,
+          );
+        const checks = groupData("services");
+        if (checks) {
+          const stale = groupState("services").stale;
+          text(
+            "servicesSummary",
+            stale
+              ? "状态已过期"
+              : checks.length
+                ? checks.filter((s) => s.ok).length +
+                  " / " +
+                  checks.length +
+                  " 项正常"
+                : "未配置",
+          );
+          $("servicesSummary").className =
+            "pill " +
+            (stale
+              ? "warn"
+              : checks.every((s) => s.ok) && checks.length
+                ? "good"
+                : "");
+        }
+        const expired =
+          !fast ||
+          performance.now() - fastReceived > Math.max(refreshMs * 2.5, 5000);
+        const offline = fastError || expired;
+        const root = $("liveState");
+        root.className = "live" + (offline ? " warn" : "");
+        root.lastElementChild.textContent = !fast
+          ? fastError
+            ? "连接失败"
+            : "连接中"
+          : offline
+            ? "数据已过期"
+            : "实时更新";
+        for (const node of document.querySelectorAll(".live-sample"))
+          node.classList.toggle("stale-data", offline && !!fast);
+        const banner = $("connectionBanner");
+        banner.hidden =
+          !fastError && !overviewError && !storageError && !(expired && fast);
+        banner.textContent =
+          fastError || (expired && fast)
+            ? "实时数据暂时不可用，正在自动重试。已显示的数值为上次成功采样。"
+            : storageError
+              ? "历史数据写入失败，请检查数据库状态。"
+              : "部分信息暂时无法更新，正在自动重试；对应区块已标记过期。";
+        for (const [id, name] of [
+          ["filesystems", "filesystems"],
+          ["disks", "smart"],
+          ["containers", "containers"],
+          ["dockerSpace", "docker_usage"],
+          ["networkInfo", "network_info"],
+          ["processCPU", "processes"],
+          ["processMemory", "processes"],
+          ["servicesGrid", "services"],
+        ])
+          $(id).classList.toggle("stale-data", groupState(name).stale);
+      }
+      function cpuTemps() {
+        const temps = groupData("temperatures", true) || [];
+        const preferred = temps.filter((t) =>
+          ["Tctl", "Package id 0"].includes(t.label),
+        );
+        return preferred.length
+          ? preferred
+          : temps.filter((t) => /k10temp|coretemp|cpu/i.test(t.chip));
+      }
+      function renderTemperatureGrid() {
+        const sensors = groupData("temperatures") || [];
+        const smart = groupData("smart") || [];
+        const readings = sensors.map((t) => {
+          const cpu = /k10temp|coretemp|cpu/i.test(t.chip);
+          let label = t.label;
+          if (t.label === "Tctl") label = "CPU 控制温度";
+          else if (t.label === "Tdie") label = "CPU 芯片温度";
+          else if (t.label.startsWith("Tccd"))
+            label = "CPU 核心区域 " + t.label.replace("Tccd", "CCD ");
+          else if (t.label.startsWith("Package id")) label = "CPU 封装温度";
+          else if (/nvme/i.test(t.chip))
+            label =
+              t.label === "Composite"
+                ? "NVMe 综合温度"
+                : t.label.replace("Sensor ", "NVMe 探头 ");
+          return {
+            ...t,
+            title: label,
+            source: cpu ? "CPU · " + t.label : t.chip + " · " + t.label,
+            group: "temperatures",
+            order: cpu ? 0 : 1,
+          };
+        });
+        const hasNvmeSensors = sensors.some(
+          (t) => /nvme/i.test(t.chip) && t.label === "Composite",
+        );
+        for (const d of smart) {
+          if (d.kind === "NVMe" && hasNvmeSensors) continue;
+          readings.push({
+            title:
+              d.kind === "NVMe"
+                ? "NVMe 温度"
+                : d.kind === "HDD"
+                  ? "机械硬盘温度"
+                  : "固态硬盘温度",
+            source: (d.model || d.device) + " · SMART",
+            value: d.temperature,
+            group: "smart",
+            order: 2,
+            note: d.standby
+              ? "磁盘休眠中，未唤醒读取"
+              : d.error
+                ? "本轮读取失败"
+                : null,
+          });
+        }
+        readings.sort((a, b) => a.order - b.order);
+        const fragment = document.createDocumentFragment();
+        for (const t of readings) {
+          const card = el("article", "temperature-card");
+          card.dataset.tempGroup = t.group;
+          card.append(el("h3", "", t.title));
+          const value = el("div", "temperature-reading", num(t.value));
+          if (finite(t.critical) && t.value >= t.critical)
+            value.classList.add("bad");
+          value.append(el("small", "", "°C"));
+          card.append(value);
+          card.append(el("div", "temperature-source", t.note || t.source));
+          const stamp = el("div", "group-status");
+          stamp.dataset.group = t.group;
+          card.append(stamp);
+          fragment.append(card);
+        }
+        if (!readings.length)
+          fragment.append(
+            el(
+              "div",
+              "empty",
+              groupState("temperatures").error
+                ? "温度数据暂不可用"
+                : "正在读取温度…",
+            ),
+          );
+        $("temperatureGrid").replaceChildren(fragment);
+        text(
+          "temperatureCount",
+          readings.length ? readings.length + " 项温度" : "暂无数据",
+        );
+      }
+      function renderTemperatures() {
+        const temps = cpuTemps();
+        const value = temps.length
+          ? Math.max(...temps.map((t) => t.value))
+          : null;
+        text("legendTemp", finite(value) ? num(value) + "°C" : "—");
+        const all = groupData("temperatures", true) || [];
+        text(
+          "cpuSensors",
+          all
+            .filter(
+              (t) =>
+                /k10temp|coretemp|cpu/i.test(t.chip) ||
+                ["Tctl", "Package id 0"].includes(t.label),
+            )
+            .map((t) => `${t.label} ${num(t.value)} °C`)
+            .join(" · ") || "—",
+        );
+      }
+      function renderFast(data) {
+        fast = data;
+        fastReceived = performance.now();
+        fastError = false;
+        serverOffset = data.sampled_at * 1000 - Date.now();
+        const cpu = data.cpu,
+          memory = data.memory,
+          network = data.network;
+        text("cpuValue", num(cpu.usage_percent));
+        text(
+          "cpuSub",
+          `${cpu.per_core.length} 线程 · 负载 ${num(data.load[0], 2)}`,
+        );
+        meter("cpuMeter", cpu.usage_percent, "cpu");
+        text("memValue", num(memory.used_percent));
+        meter("memMeter", memory.used_percent, "memory");
+        text("netRx", fmtRate(network.rx_bps));
+        text("netTx", fmtRate(network.tx_bps));
+        text(
+          "netSub",
+          `${network.interface || "无默认出口"} · ${network.operstate === "up" ? "已连接" : network.operstate === "down" ? "未连接" : "状态未知"}`,
+        );
+        text("uptime", duration(data.uptime_seconds));
+        text(
+          "cpuLoad",
+          data.load.map((v) => num(v, 2)).join(" / ") + "（1 / 5 / 15 分钟）",
+        );
+        const sum = (key) =>
+          data.disk_io.length && data.disk_io.every((d) => finite(d[key]))
+            ? data.disk_io.reduce((a, d) => a + d[key], 0)
+            : null;
+        text("lastUpdated", fmtTime(data.generated_at) + " 采样");
+        const frequencies = cpu.per_core.map((c) => c.mhz).filter(finite);
+        text(
+          "cpuFreq",
+          frequencies.length
+            ? `${Math.round(frequencies.reduce((a, b) => a + b, 0) / frequencies.length)} MHz`
+            : "—",
+        );
+        text("memoryUsed", fmtBytes(memory.used_bytes));
+        text("memoryTotal", "/ " + fmtBytes(memory.total_bytes));
+        text("memoryAvailable", fmtBytes(memory.available_bytes));
+        text("memoryCache", fmtBytes(memory.cache_bytes));
+        text(
+          "memorySwap",
+          memory.swap_total_bytes
+            ? `${fmtBytes(memory.swap_used_bytes)} / ${fmtBytes(memory.swap_total_bytes)}`
+            : "未启用",
+        );
+        const fragment = document.createDocumentFragment();
+        for (const core of cpu.per_core) {
+          const node = el("div", "core");
+          const row = el("div");
+          row.append(
+            el("span", "", core.name.replace("cpu", "线程 ")),
+            el("b", "", num(core.usage_percent, 0) + "%"),
+          );
+          const bar = el("div", "meter");
+          const fill = el("i");
+          fill.style.width = `${core.usage_percent || 0}%`;
+          bar.append(fill);
+          node.title = finite(core.mhz) ? `${core.mhz} MHz` : "";
+          node.append(row, bar);
+          fragment.append(node);
+        }
+        $("cpuFreq").hidden = !frequencies.length;
+        $("cpuFreq").previousElementSibling.hidden = !frequencies.length;
+        renderBasicInfo();
+        $("coreGrid").replaceChildren(fragment);
+        liveHistory.push({
+          t: data.sampled_at,
+          cpu: cpu.usage_percent,
+          mem: memory.used_percent,
+          ...(data.temperature_channels || {}),
+          rx: network.rx_bps,
+          tx: network.tx_bps,
+          dr: sum("read_bps"),
+          dw: sum("write_bps"),
+        });
+        liveHistory = liveHistory
+          .filter((p) => p.t >= (Date.now() + serverOffset) / 1000 - 120)
+          .slice(-150);
+        text("legendCpu", num(cpu.usage_percent) + "%");
+        text("legendMem", num(memory.used_percent) + "%");
+        text("legendRx", fmtRate(network.rx_bps));
+        text("legendTx", fmtRate(network.tx_bps));
+        text("legendRead", fmtRate(sum("read_bps")));
+        text("legendWrite", fmtRate(sum("write_bps")));
+        renderFreshness();
+        renderAlerts();
+        drawCharts();
+      }
+      function renderSystem() {
+        const sys = groupData("system");
+        if (!sys) return;
+        const network = groupData("network_info");
+        text("hostLabel", sys.hostname || "本机监控");
+        text("footerHost", sys.hostname);
+        document.title = `${sys.hostname || "本机"} · 服务器状态`;
+        text(
+          "hostMeta",
+          [
+            sys.os,
+            sys.architecture,
+            network?.addresses?.find((a) => !a.includes(":")),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        );
+        text("cpuModel", sys.cpu_model || "处理器信息不可用");
+        text(
+          "cpuTopology",
+          [
+            sys.cpu_cores ? sys.cpu_cores + " 核" : null,
+            sys.cpu_threads ? sys.cpu_threads + " 线程" : null,
+          ]
+            .filter(Boolean)
+            .join(" / ") || "—",
+        );
+        const modules = sys.memory_modules || [];
+        const types = [...new Set(modules.map((m) => m.type).filter(Boolean))];
+        const speeds = [
+          ...new Set(modules.map((m) => m.speed).filter(Boolean)),
+        ];
+        text(
+          "memorySpec",
+          [modules.length ? modules.length + " 条" : null, ...types, ...speeds]
+            .filter(Boolean)
+            .join(" · ") || "规格未知",
+        );
+        const fragment = document.createDocumentFragment();
+        for (const m of modules) {
+          const node = el("div", "module");
+          node.append(
+            el("b", "", `${m.size} ${m.type || ""}`),
+            document.createTextNode(
+              ` · ${m.speed || "速率未知"} · ${m.slot || ""}`,
+            ),
+          );
+          if (m.model && m.model !== "Unknown")
+            node.append(el("div", "mono", m.model));
+          fragment.append(node);
+        }
+        if (!modules.length)
+          fragment.append(
+            el("div", "module", sys.memory_error || "无内存条信息"),
+          );
+        $("memoryModules").replaceChildren(fragment);
+        renderBasicInfo();
+      }
+      function renderNetwork() {
+        const n = groupData("network_info");
+        if (n) {
+          kv($("networkInfo"), [
+            ["接口", n.interface || "无默认出口"],
+            [
+              "协商速率",
+              n.speed_mbps
+                ? `${n.speed_mbps} Mb/s${n.duplex === "full" ? " · 全双工" : n.duplex === "half" ? " · 半双工" : ""}`
+                : "—",
+            ],
+            ["IP 地址", n.addresses?.join(" · ") || "—"],
+          ]);
+        }
+      }
+      function renderFilesystems() {
+        const filesystems = groupData("filesystems");
+        if (!filesystems) {
+          $("filesystems").replaceChildren(
+            el(
+              "div",
+              "empty",
+              groupState("filesystems").error
+                ? "分区容量暂不可用"
+                : "正在读取分区容量…",
+            ),
+          );
+          return;
+        }
+        const fragment = document.createDocumentFragment();
+        const fsLimit = meterLimit("filesystem"),
+          fsWarn = Math.max(0, fsLimit - 10);
+        for (const fs of filesystems) {
+          const node = el("div", "filesystem");
+          const row = el("div", "fs-title");
+          row.append(
+            el("b", "mono", fs.mount),
+            el(
+              "span",
+              fs.used_percent >= fsLimit
+                ? "bad"
+                : fs.used_percent >= fsWarn
+                  ? "warn"
+                  : "mono",
+              fs.used_percent + "%",
+            ),
+          );
+          const bar = el(
+            "div",
+            "meter" +
+              (fs.used_percent >= fsLimit
+                ? " danger"
+                : fs.used_percent >= fsWarn
+                  ? " warning"
+                  : ""),
+          );
+          const fill = el("i");
+          fill.style.width = `${Math.min(100, Math.max(0, fs.used_percent))}%`;
+          bar.append(fill);
+          const meta = el("div", "fs-meta");
+          meta.append(
+            el(
+              "span",
+              "",
+              `${fmtBytes(fs.used_bytes)} / ${fmtBytes(fs.size_bytes)}`,
+            ),
+            el("span", "", `可用 ${fmtBytes(fs.avail_bytes)}`),
+          );
+          node.title = `${fs.source} · ${fs.type}`;
+          node.append(row, bar, meta);
+          fragment.append(node);
+        }
+        if (!filesystems.length)
+          fragment.append(el("div", "empty", "未发现本地磁盘分区"));
+        $("filesystems").replaceChildren(fragment);
+      }
+      function diskHealth(d) {
+        if (d.standby) return ["muted", "休眠中"];
+        if (d.error) return ["warn", "无法读取"];
+        if (
+          d.passed === false ||
+          (d.media_errors || 0) > 0 ||
+          (d.pending_sectors || 0) > 0 ||
+          (d.uncorrectable_sectors || 0) > 0
+        )
+          return ["bad", "需要关注"];
+        if ((d.reallocated_sectors || 0) > 0 || (d.percentage_used || 0) >= 90)
+          return ["warn", "需要关注"];
+        return d.passed === true ? ["good", "健康正常"] : ["muted", "状态未知"];
+      }
+      function renderDisks() {
+        const disks = groupData("smart");
+        if (!disks) {
+          $("disks").replaceChildren(
+            el(
+              "div",
+              "empty",
+              groupState("smart").error
+                ? "磁盘健康数据暂不可用"
+                : "正在读取 SMART…",
+            ),
+          );
+          return;
+        }
+        const opened = new Set(
+          [...$("disks").querySelectorAll("details[open]")].map(
+            (n) => n.dataset.device,
+          ),
+        );
+        const fragment = document.createDocumentFragment();
+        for (const d of disks) {
+          const node = el("div", "disk");
+          const header = el("div", "disk-top");
+          const title = el("div");
+          title.append(
+            el("div", "disk-name", d.model || d.device),
+            el(
+              "div",
+              "disk-device",
+              `${d.device} · ${d.kind || "磁盘"}${d.size_bytes ? " · " + fmtBytes(d.size_bytes) : ""}`,
+            ),
+          );
+          const [tone, label] = diskHealth(d);
+          header.append(title, el("span", "pill " + tone, label));
+          node.append(header);
+          if (d.standby || d.error)
+            node.append(
+              el(
+                "p",
+                "memory-note",
+                d.standby
+                  ? "磁盘正在休眠，本轮不唤醒读取。"
+                  : "本轮未能读取磁盘健康数据。",
+              ),
+            );
+          else {
+            const stats = el("div", "disk-stats");
+            for (const [k, v] of [
+              ["温度", finite(d.temperature) ? `${d.temperature} °C` : "—"],
+              [
+                "通电",
+                finite(d.power_on_hours)
+                  ? `${d.power_on_hours.toLocaleString("zh-CN")} 小时`
+                  : "—",
+              ],
+              ...(finite(d.percentage_used)
+                ? [["寿命消耗", d.percentage_used + "%"]]
+                : []),
+            ]) {
+              const s = el("span", "", k + " ");
+              s.append(el("b", "", v));
+              stats.append(s);
+            }
+            node.append(stats);
+            const details = el("details");
+            details.dataset.device = d.device;
+            details.open = opened.has(d.device);
+            details.append(el("summary", "", "更多健康指标"));
+            const dl = el("dl", "kv");
+            const rows =
+              d.kind === "NVMe"
+                ? [
+                    [
+                      "可用备用空间",
+                      finite(d.available_spare)
+                        ? d.available_spare + "%"
+                        : null,
+                    ],
+                    ["介质错误", d.media_errors],
+                    ["异常断电次数", d.unsafe_shutdowns],
+                    ["累计写入", fmtBytes(d.written_bytes)],
+                  ]
+                : [
+                    ["重映射扇区", d.reallocated_sectors],
+                    ["待映射扇区", d.pending_sectors],
+                    ["不可校正扇区", d.uncorrectable_sectors],
+                    ["传输 CRC 错误", d.udma_crc_errors],
+                  ];
+            kv(dl, rows);
+            details.append(
+              dl,
+              el(
+                "p",
+                "memory-note",
+                "错误与断电次数为累计值，不代表本轮新增。",
+              ),
+            );
+            node.append(details);
+          }
+          fragment.append(node);
+        }
+        if (!disks.length)
+          fragment.append(el("div", "empty", "未发现可读取 SMART 的磁盘"));
+        $("disks").replaceChildren(fragment);
+      }
+      const containerStateLabel = (d) =>
+        d.state === "running"
+          ? d.health === "unhealthy"
+            ? "健康检查异常"
+            : d.health === "starting"
+              ? "健康检查中"
+              : d.health === "healthy"
+                ? "运行正常"
+                : "运行中"
+          : {
+              exited: "已停止",
+              created: "未启动",
+              paused: "已暂停",
+              restarting: "重启中",
+              dead: "异常退出",
+              removing: "移除中",
+            }[d.state] || "状态未知";
+      function renderContainers() {
+        const rows = groupData("containers");
+        if (!rows) {
+          text("containerRunning", "—");
+          text("containerCounts", "容器数据暂不可用");
+          $("containers").replaceChildren(el("div", "empty", "暂无容器数据"));
+          return;
+        }
+        const running = rows.filter((d) => d.state === "running").length,
+          unhealthy = rows.filter((d) => d.health === "unhealthy").length;
+        text("containerRunning", running);
+        text(
+          "containerCounts",
+          `运行中 / 共 ${rows.length} 个${unhealthy ? " · " + unhealthy + " 个健康检查异常" : ""}`,
+        );
+        const scroll = $("containers").scrollTop;
+        const query = $("containerSearch").value.trim().toLowerCase();
+        const fragment = document.createDocumentFragment();
+        for (const d of rows.filter((d) =>
+          d.name.toLowerCase().includes(query),
+        )) {
+          const row = el("div", "container-row");
+          const tone =
+            d.health === "unhealthy" || d.state === "dead"
+              ? "bad"
+              : d.state === "restarting" || d.health === "starting"
+                ? "warn"
+                : d.state === "running"
+                  ? "good"
+                  : "";
+          row.append(
+            el("i", "container-dot " + tone),
+            el("span", "container-name mono", d.name),
+            el("span", "container-state", containerStateLabel(d)),
+          );
+          row.title = `${d.image} · ${d.status}`;
+          fragment.append(row);
+        }
+        if (!fragment.childNodes.length)
+          fragment.append(
+            el("div", "empty", query ? "没有匹配的容器" : "暂无容器"),
+          );
+        $("containers").replaceChildren(fragment);
+        $("containers").scrollTop = scroll;
+      }
+      function renderDockerUsage() {
+        const rows = groupData("docker_usage");
+        if (!rows) return;
+        const lookup = Object.fromEntries(rows.map((r) => [r.Type, r]));
+        const fragment = document.createDocumentFragment();
+        for (const [key, label] of [
+          ["Images", "镜像占用"],
+          ["Build Cache", "构建缓存"],
+          ["Local Volumes", "数据卷"],
+        ]) {
+          const row = lookup[key];
+          const node = el("div", "", label);
+          node.append(el("b", "", row?.Size || "—"));
+          fragment.append(node);
+        }
+        $("dockerSpace").replaceChildren(fragment);
+        kv(
+          $("dockerSpaceDetails"),
+          rows.map((row) => [
+            {
+              Images: "镜像",
+              Containers: "容器",
+              "Local Volumes": "数据卷",
+              "Build Cache": "构建缓存",
+            }[row.Type] || row.Type,
+            `${row.Size} · 可回收 ${row.Reclaimable}`,
+          ]),
+        );
+      }
+      function renderBasicInfo() {
+        const sys = groupData("system") || {},
+          network = groupData("network_info") || {},
+          env = sys.environment || {};
+        const hostname = sys.hostname || fast?.hostname || "服务器";
+        text("pageHostname", hostname);
+        text(
+          "hostLabel",
+          env.provider ? env.provider + " · 本机监控" : "本机监控",
+        );
+        text(
+          "hostMeta",
+          [env.label, sys.architecture, sys.timezone]
+            .filter(Boolean)
+            .join(" · ") || "正在读取服务器信息…",
+        );
+        text(
+          "environmentLabel",
+          [env.provider, env.label].filter(Boolean).join(" · ") || "检测中",
+        );
+        text("basicOS", sys.os);
+        text(
+          "basicCPU",
+          [
+            sys.cpu_model,
+            sys.cpu_threads
+              ? sys.cpu_threads + (env.kind === "vm" ? " vCPU" : " 线程")
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "—",
+        );
+        const modules = sys.memory_modules || [],
+          speeds = [...new Set(modules.map((m) => m.speed).filter(Boolean))],
+          types = [...new Set(modules.map((m) => m.type).filter(Boolean))];
+        text(
+          "basicMemory",
+          [fast ? fmtBytes(fast.memory.total_bytes) : null, ...types, ...speeds]
+            .filter(Boolean)
+            .join(" · ") || "—",
+        );
+        const addresses = (network.addresses || []).filter(
+          (a) => !a.includes(":"),
+        );
+        text(
+          "basicNetwork",
+          [...addresses, network.interface || fast?.network.interface]
+            .filter(Boolean)
+            .join(" · ") || "—",
+        );
+        text(
+          "basicKernel",
+          [sys.kernel, sys.architecture].filter(Boolean).join(" · ") || "—",
+        );
+        text("basicBoard", sys.board);
+        $("basicBoardRow").hidden =
+          !sys.board || env.kind === "vm" || env.kind === "container";
+        text(
+          "basicEnvironment",
+          [sys.timezone, env.virtualization].filter(Boolean).join(" · ") || "—",
+        );
+        if (sys.memory_modules && !modules.length)
+          text("memorySpec", "系统内存");
+      }
+      function renderCapabilities() {
+        const unavailable = (name) => groups[name]?.available === false;
+        $("containersPanel").hidden = unavailable("containers");
+        $("networkPanel").classList.toggle("solo", unavailable("containers"));
+        $("smartColumn").hidden = unavailable("smart");
+        $("storagePanel")
+          .querySelector(".storage-layout")
+          .classList.toggle("no-smart", unavailable("smart"));
+        const sensors = groupData("temperatures") || [],
+          disks = groupData("smart") || [];
+        const hasDiskTemp = disks.some((d) => finite(d.temperature));
+        $("temperaturePanel").hidden =
+          unavailable("temperatures") &&
+          (unavailable("smart") ||
+            (groups.smart?.available === true &&
+              !hasDiskTemp &&
+              disks.every((d) => !d.error)));
+        $("memoryModulesDetails").hidden =
+          !!groupData("system") &&
+          !(groupData("system").memory_modules || []).length;
+        $("cpuSensors").hidden = unavailable("temperatures");
+        $("cpuSensors").previousElementSibling.hidden =
+          unavailable("temperatures");
+        const channels = {
+          temp: sensors.some(
+            (t) =>
+              /cpu|k10temp|coretemp/i.test(t.chip) ||
+              t.label === "Package id 0",
+          ),
+          ccd: sensors.some((t) => t.label.startsWith("Tccd")),
+          nvme:
+            sensors.some(
+              (t) => /nvme/i.test(t.chip) && t.label === "Composite",
+            ) || disks.some((d) => d.kind === "NVMe" && finite(d.temperature)),
+          nvme_s1: sensors.some(
+            (t) => /nvme/i.test(t.chip) && t.label === "Sensor 1",
+          ),
+          nvme_s2: sensors.some(
+            (t) => /nvme/i.test(t.chip) && t.label === "Sensor 2",
+          ),
+          hdd: disks.some((d) => d.kind !== "NVMe" && finite(d.temperature)),
+        };
+        temperatureKeys = new Set(
+          Object.keys(channels).filter((k) => channels[k]),
+        );
+        [...document.querySelectorAll(".temperature-legend>span")].forEach(
+          (n, i) =>
+            (n.hidden = !temperatureKeys.has(
+              ["temp", "ccd", "nvme", "nvme_s1", "nvme_s2", "hdd"][i],
+            )),
+        );
+      }
+      function renderProcesses() {
+        const data = groupData("processes");
+        if (!data) return;
+        for (const [target, rows, memory] of [
+          ["processCPU", data.cpu, false],
+          ["processMemory", data.memory, true],
+        ]) {
+          const fragment = document.createDocumentFragment(),
+            head = el("div", "process-head");
+          for (const label of [
+            "PID",
+            "进程",
+            memory ? "内存占比" : "CPU",
+            "占用内存",
+          ])
+            head.append(el("span", "", label));
+          fragment.append(head);
+          for (const process of rows) {
+            const row = el("div", "process-row");
+            row.append(
+              el("span", "mono", process.pid),
+              el("span", "name", process.name),
+              el(
+                "span",
+                "mono",
+                finite(memory ? process.memory_percent : process.cpu_percent)
+                  ? num(memory ? process.memory_percent : process.cpu_percent) +
+                      "%"
+                  : "采样中",
+              ),
+              el("span", "mono", fmtBytes(process.rss_bytes)),
+            );
+            row.title = process.name;
+            fragment.append(row);
+          }
+          if (!rows.length)
+            fragment.append(el("div", "empty", "暂无可读取的进程"));
+          if (!memory)
+            fragment.append(
+              el(
+                "div",
+                "process-basis",
+                "单核满载记为 100%，多核进程可超过 100%。",
+              ),
+            );
+          $(target).replaceChildren(fragment);
+        }
+      }
+      function renderServices() {
+        const rows = groupData("services");
+        if (!rows) return;
+        const fragment = document.createDocumentFragment();
+        for (const item of rows) {
+          const node = el("article", "service-card"),
+            title = el("div", "service-title " + (item.ok ? "good" : "bad"));
+          title.append(el("i"), el("span", "", item.name));
+          const result = el("div", "service-result");
+          result.append(
+            el("span", item.ok ? "good" : "bad", item.detail),
+            el("span", "mono muted", num(item.latency_ms) + " ms"),
+          );
+          node.append(
+            title,
+            result,
+            el("div", "service-target", item.target || ""),
+          );
+          if (item.consecutive_failures)
+            node.append(
+              el(
+                "div",
+                "service-failures",
+                "连续失败 " + item.consecutive_failures + " 次",
+              ),
+            );
+          fragment.append(node);
+        }
+        if (!rows.length)
+          fragment.append(el("div", "empty", "暂无服务检查配置"));
+        $("servicesGrid").replaceChildren(fragment);
+      }
+      function eventDuration(seconds) {
+        if (!finite(seconds)) return "";
+        if (seconds < 60) return Math.round(seconds) + " 秒";
+        if (seconds < 3600)
+          return (
+            Math.floor(seconds / 60) + " 分 " + Math.round(seconds % 60) + " 秒"
+          );
+        return duration(seconds);
+      }
+      function mergeEventFeed(payload, older = false) {
+        eventFeed = payload;
+        eventReceived = performance.now();
+        eventQueryError = false;
+        const map = new Map(eventRows.map((row) => [row.id, row]));
+        for (const row of payload.events) map.set(row.id, row);
+        eventRows = [...map.values()].sort((a, b) => b.id - a.id);
+        if (older || !olderLoaded) eventCursor = payload.next_before;
+        const fragment = document.createDocumentFragment();
+        for (const item of eventRows) {
+          const row = el("div", "event-row"),
+            recovered = item.phase === "recovered";
+          row.append(
+            el(
+              "span",
+              "event-phase " +
+                (recovered
+                  ? "good"
+                  : item.severity === "critical"
+                    ? "bad"
+                    : "warn"),
+              recovered ? "恢复" : "异常",
+            ),
+          );
+          const body = el("div", "event-content");
+          body.append(
+            el("div", "", item.message),
+            el(
+              "div",
+              "event-meta",
+              new Date(item.occurred_at * 1000).toLocaleString("zh-CN", {
+                hour12: false,
+              }) +
+                (finite(item.duration_seconds)
+                  ? " · 持续 " + eventDuration(item.duration_seconds)
+                  : ""),
+            ),
+          );
+          row.append(body);
+          fragment.append(row);
+        }
+        if (!eventRows.length)
+          fragment.append(
+            el(
+              "div",
+              "empty",
+              "暂无异常或恢复记录。持续异常和恢复确认后会自动记录。",
+            ),
+          );
+        $("eventList").replaceChildren(fragment);
+        text(
+          "eventCount",
+          eventRows.length ? eventRows.length + " 条已载入" : "暂无记录",
+        );
+        text("eventsUpdated", fmtTime(payload.generated_at) + " 更新");
+        $("olderEvents").hidden = eventCursor === null;
+        $("eventsPanel").classList.toggle("stale-data", !payload.ok);
+        renderAlerts();
+      }
+      function renderAlerts() {
+        const alerts = [];
+        const online =
+          fast &&
+          !fastError &&
+          performance.now() - fastReceived < Math.max(refreshMs * 2.5, 5000);
+        if (storageError) alerts.push(["bad", "历史数据写入失败。"]);
+        if (
+          eventQueryError ||
+          (eventFeed &&
+            (!eventFeed.ok || performance.now() - eventReceived > 15000))
+        )
+          alerts.push(["warn", "事件记录暂时无法更新，正在重试。"]);
+        for (const active of eventFeed?.active || []) {
+          const unconfirmed =
+            finite(active.last_seen) &&
+            (Date.now() + serverOffset) / 1000 - active.last_seen >
+              Math.max(15, (active.interval || 1) * 2.5);
+          alerts.push([
+            active.good_count
+              ? "warn"
+              : active.severity === "critical"
+                ? "bad"
+                : "warn",
+            unconfirmed
+              ? active.label +
+                " 最近一次异常尚未确认恢复，最后观察于 " +
+                fmtTime(active.last_seen * 1000) +
+                "。"
+              : active.good_count
+                ? active.label + " 正在恢复，等待连续正常确认。"
+                : active.message,
+          ]);
+        }
+        for (const [name, label] of [
+          ["temperatures", "温度"],
+          ["filesystems", "分区容量"],
+          ["smart", "磁盘健康"],
+          ["containers", "容器"],
+          ["docker_usage", "Docker 空间"],
+          ["system", "系统信息"],
+          ["network_info", "网络信息"],
+          ["processes", "进程排行"],
+          ["services", "服务检查"],
+        ]) {
+          const g = groupState(name);
+          if (g.available === false) continue;
+          if (g.stale && (g.error || g.data || overviewError))
+            alerts.push([
+              "warn",
+              label + "数据" + (g.data ? "已过期" : "暂不可用") + "。",
+            ]);
+        }
+        if (!online && fast)
+          alerts.unshift(["warn", "实时采样已中断，当前数值仅供参考。"]);
+        const fragment = document.createDocumentFragment();
+        for (const [tone, message] of alerts)
+          fragment.append(el("li", tone, message));
+        $("alertList").replaceChildren(fragment);
+        const ready =
+          online &&
+          eventFeed &&
+          !eventQueryError &&
+          Object.keys(groups).length > 0 &&
+          Object.values(groups).every(
+            (g) => g.available === false || g.data !== null,
+          );
+        text(
+          "alertCount",
+          alerts.length ? alerts.length + " 项" : ready ? "正常" : "检查中",
+        );
+        $("alertCount").className =
+          "pill " + (alerts.length ? "warn" : ready ? "good" : "");
+        $("allClear").hidden = !!alerts.length;
+        text(
+          "allClear",
+          ready ? "当前未发现持续异常。" : "正在读取服务器状态…",
+        );
+      }
+      const chartConfigs = [
+        {
+          id: "chartUsage",
+          title: "CPU 使用率",
+          empty: "emptyUsage",
+          keys: ["cpu"],
+          max: 100,
+          format: (v) => Math.round(v) + "%",
+        },
+        {
+          id: "chartMemory",
+          title: "内存使用率",
+          empty: "emptyMemory",
+          keys: ["mem"],
+          max: 100,
+          format: (v) => Math.round(v) + "%",
+        },
+        {
+          id: "chartTemp",
+          title: "温度",
+          empty: "emptyTemp",
+          keys: ["temp", "ccd", "nvme", "nvme_s1", "nvme_s2", "hdd"],
+          max: null,
+          format: (v) => Math.round(v) + "°C",
+        },
+        {
+          id: "chartNetwork",
+          title: "网络流量",
+          empty: "emptyNetwork",
+          keys: ["rx", "tx"],
+          max: null,
+          format: (v) => fmtBytes(v, 0) + "/s",
+        },
+        {
+          id: "chartDisk",
+          title: "磁盘读写",
+          empty: "emptyDisk",
+          keys: ["dr", "dw"],
+          max: null,
+          format: (v) => fmtBytes(v, 0) + "/s",
+        },
+      ];
+      for (const config of chartConfigs) chartRanges[config.id] = globalRange;
+      function chartSeries(rangeMinutes) {
+        const stored = serverPoints.get(rangeMinutes),
+          now = (Date.now() + serverOffset) / 1000,
+          cutoff = now - rangeMinutes * 60,
+          map = new Map();
+        if (stored)
+          for (const p of stored.points)
+            if (p.t >= cutoff) map.set(Math.round(p.t * 1000), p);
+        const lastStored = stored?.points?.length
+          ? stored.points[stored.points.length - 1].t
+          : cutoff;
+        for (const p of liveHistory)
+          if (p.t > lastStored) map.set(Math.round(p.t * 1000), p);
+        return [...map.values()].sort((a, b) => a.t - b.t);
+      }
+      function chartKeys(base) {
+        return base.id === "chartTemp"
+          ? base.keys.filter((k) => temperatureKeys.has(k))
+          : base.keys;
+      }
+      function chartColors() {
+        const style = getComputedStyle(document.documentElement);
+        return [
+          style.getPropertyValue("--blue").trim(),
+          style.getPropertyValue("--green").trim(),
+          style.getPropertyValue("--amber").trim(),
+          style.getPropertyValue("--violet").trim(),
+          style.getPropertyValue("--red").trim(),
+          "#17899b",
+        ];
+      }
+      function paintChart(canvas, base, rangeMinutes, large = false) {
+        if (!canvas) return false;
+        const style = getComputedStyle(document.documentElement),
+          colors = chartColors(),
+          muted = style.getPropertyValue("--muted").trim(),
+          line = style.getPropertyValue("--line").trim(),
+          keys = chartKeys(base),
+          stored = serverPoints.get(rangeMinutes),
+          interval = stored?.interval || 1,
+          now = (Date.now() + serverOffset) / 1000,
+          start = now - rangeMinutes * 60,
+          visible = chartSeries(rangeMinutes).filter(
+            (p) => p.t >= start && p.t <= now + 2,
+          ),
+          bounds = canvas.getBoundingClientRect(),
+          w = bounds.width,
+          h = bounds.height,
+          dpr = Math.min(window.devicePixelRatio || 1, 2);
+        if (!w || !h) return false;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const left = large ? 82 : keys.includes("rx") || keys.includes("dr") ? 69 : 45,
+          right = large ? 18 : 8,
+          top = large ? 20 : 13,
+          bottom = large ? 34 : 24,
+          pw = w - left - right,
+          ph = h - top - bottom,
+          segments = large ? 4 : 2;
+        const values = visible
+          .flatMap((p) => keys.map((k) => p[k]))
+          .filter(finite);
+        const rawMax = Math.max(1, ...values) * 1.2;
+        const magnitude = 10 ** Math.floor(Math.log10(rawMax));
+        const max =
+          base.max || Math.ceil(rawMax / magnitude / 2) * magnitude * 2;
+        ctx.font = large ? "12px system-ui" : "10px system-ui";
+        ctx.textBaseline = "middle";
+        for (let i = 0; i <= segments; i++) {
+          const y = top + (ph * i) / segments;
+          ctx.strokeStyle = line;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(left, y + 0.5);
+          ctx.lineTo(w - right, y + 0.5);
+          ctx.stroke();
+          ctx.fillStyle = muted;
+          ctx.textAlign = "right";
+          ctx.fillText(base.format(max * (1 - i / segments)), left - 9, y);
+        }
+        for (let i = 0; i <= segments; i++) {
+          const t = start + ((now - start) * i) / segments;
+          ctx.textAlign =
+            i === 0 ? "left" : i === segments ? "right" : "center";
+          ctx.fillStyle = muted;
+          ctx.fillText(
+            new Date(t * 1000).toLocaleString("zh-CN", {
+              ...(rangeMinutes >= 1440
+                ? { month: "numeric", day: "numeric" }
+                : {}),
+              hour12: false,
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            left + (pw * i) / segments,
+            h - (large ? 12 : 7),
+          );
+        }
+        keys.forEach((key, index) => {
+          let previous = null;
+          ctx.beginPath();
+          ctx.strokeStyle = colors[index];
+          ctx.lineWidth = large ? 2.2 : 1.7;
+          ctx.lineJoin = "round";
+          for (const p of visible) {
+            if (!finite(p[key])) {
+              previous = null;
+              continue;
+            }
+            const x = left + ((p.t - start) / (now - start)) * pw,
+              y = top + ph * (1 - Math.max(0, Math.min(max, p[key])) / max);
+            if (!previous || p.t - previous.t > Math.max(3, interval * 2.5))
+              ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+            previous = p;
+          }
+          ctx.stroke();
+          const last = visible.filter((p) => finite(p[key])).at(-1);
+          if (last) {
+            ctx.beginPath();
+            ctx.fillStyle = colors[index];
+            ctx.arc(
+              left + ((last.t - start) / (now - start)) * pw,
+              top + ph * (1 - Math.max(0, Math.min(max, last[key])) / max),
+              large ? 3.2 : 2.4,
+              0,
+              Math.PI * 2,
+            );
+            ctx.fill();
+          }
+        });
+        return values.length > 0;
+      }
+      function drawCharts() {
+        if (document.hidden) return;
+        for (const base of chartConfigs) {
+          const rangeMinutes = chartRanges[base.id] || globalRange;
+          $(base.empty).hidden = paintChart($(base.id), base, rangeMinutes);
+        }
+        paintZoomedChart();
+      }
+      let zoomedChart = null;
+      const chartLabels = {
+        cpu: "CPU",
+        mem: "内存",
+        temp: "CPU",
+        ccd: "CCD",
+        nvme: "NVMe",
+        nvme_s1: "探头 1",
+        nvme_s2: "探头 2",
+        hdd: "硬盘",
+        rx: "接收",
+        tx: "发送",
+        dr: "读取",
+        dw: "写入",
+      };
+      function paintZoomedChart() {
+        if (!zoomedChart) return;
+        const colors = chartColors();
+        $("chartModalLegend").replaceChildren(
+          ...chartKeys(zoomedChart).map((key, index) => {
+            const item = el("span"),
+              dot = el("i");
+            dot.style.background = colors[index];
+            item.append(dot, document.createTextNode(chartLabels[key] || key));
+            return item;
+          }),
+        );
+        const hasData = paintChart(
+          $("chartModalCanvas"),
+          zoomedChart,
+          chartRanges[zoomedChart.id] || globalRange,
+          true,
+        );
+        $("chartModalEmpty").hidden = hasData;
+      }
+      function openChartModal(chartId) {
+        const base = chartConfigs.find((c) => c.id === chartId);
+        if (!base) return;
+        zoomedChart = base;
+        $("chartModalTitle").textContent = base.title || base.id;
+        $("chartModalRange").innerHTML = document.querySelector(
+          ".chart-range[data-chart]",
+        ).innerHTML;
+        $("chartModalRange").value = String(
+          chartRanges[base.id] || globalRange,
+        );
+        $("chartModal").hidden = false;
+        document.body.classList.add("modal-open");
+        // Paint synchronously so the first frame is never blank, then correct
+        // again after layout settles.
+        paintZoomedChart();
+        requestAnimationFrame(paintZoomedChart);
+        $("chartModalClose").focus();
+      }
+      function closeChartModal() {
+        if ($("chartModal").hidden) return;
+        $("chartModal").hidden = true;
+        document.body.classList.remove("modal-open");
+        const closed = zoomedChart;
+        zoomedChart = null;
+        if (closed) {
+          const trigger = document.querySelector(
+            `.chart-zoom[data-chart="${closed.id}"]`,
+          );
+          if (trigger) trigger.focus();
+        }
+      }
+      const authHeaders = () =>
+        sessionToken ? { Authorization: "Bearer " + sessionToken } : {};
+      async function getJSON(path) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        try {
+          const r = await fetch(path, {
+            cache: "no-store",
+            headers: authHeaders(),
+            signal: controller.signal,
+          });
+          if (r.status === 401) {
+            handleUnauthorized();
+            throw new Error("HTTP 401");
+          }
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return await r.json();
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      function poller(task, interval) {
+        let timer = null,
+          running = false,
+          again = false,
+          paused = false;
+        async function trigger() {
+          clearTimeout(timer);
+          if (paused || document.hidden) return;
+          if (running) {
+            again = true;
+            return;
+          }
+          running = true;
+          try {
+            await task();
+          } catch (error) {
+            console.error("监控更新失败", error.message);
+          } finally {
+            running = false;
+            if (paused || document.hidden) return;
+            if (again) {
+              again = false;
+              trigger();
+            } else timer = setTimeout(trigger, interval());
+          }
+        }
+        return {
+          trigger,
+          pause() {
+            paused = true;
+            clearTimeout(timer);
+            again = false;
+          },
+          start() {
+            paused = false;
+            trigger();
+          },
+        };
+      }
+      const fastPoll = poller(
+        async () => {
+          try {
+            renderFast(await getJSON("/api/status"));
+          } catch (e) {
+            fastError = true;
+            renderFreshness();
+            renderAlerts();
+          }
+        },
+        () => refreshMs,
+      );
+      const overviewPoll = poller(
+        async () => {
+          try {
+            const payload = await getJSON("/api/overview");
+            overviewError = false;
+            storageError = payload.storage?.ok === false;
+            overviewReceived = performance.now();
+            const changed = new Set(
+              Object.entries(payload.groups)
+                .filter(
+                  ([key, g]) =>
+                    !groups[key] ||
+                    g.updated_at !== groups[key].updated_at ||
+                    g.error !== groups[key].error ||
+                    g.available !== groups[key].available ||
+                    g.reason !== groups[key].reason,
+                )
+                .map(([key]) => key),
+            );
+            groups = payload.groups;
+            alertPolicy = payload.alert_policy || {};
+            if (finite(payload.storage?.retention_days))
+              retentionDays = payload.storage.retention_days;
+            text(
+              "servicePolicy",
+              `每 15 秒检查 · 连续失败 ${alertPolicy.service_failures || 3} 次记异常，连续成功 ${alertPolicy.service_recoveries || 2} 次记恢复`,
+            );
+            text(
+              "eventPolicy",
+              `CPU / 内存持续异常 ${alertPolicy.cpu_hold_seconds ?? 60} 秒、分区持续异常 ${alertPolicy.filesystem_hold_seconds ?? 30} 秒后记录；资源恢复需持续 ${alertPolicy.recovery_seconds ?? 30} 秒。事件保留 ${retentionDays} 天。`,
+            );
+            text("retentionNote", `保留 ${retentionDays} 天后自动清理`);
+            if (
+              serviceStarted !== null &&
+              serviceStarted !== payload.started_at
+            ) {
+              liveHistory = [];
+              serverPoints.clear();
+              historyPoll.trigger();
+            }
+            serviceStarted = payload.started_at;
+            if (changed.has("system") || changed.has("network_info"))
+              renderSystem();
+            if (changed.has("network_info")) renderNetwork();
+            if (changed.has("filesystems")) renderFilesystems();
+            if (changed.has("smart")) renderDisks();
+            if (changed.has("containers")) renderContainers();
+            if (changed.has("docker_usage")) renderDockerUsage();
+            if (changed.has("processes")) renderProcesses();
+            if (changed.has("services")) renderServices();
+            renderCapabilities();
+            renderBasicInfo();
+            if (changed.has("temperatures") || changed.has("smart"))
+              renderTemperatureGrid();
+            renderTemperatures();
+            renderFreshness();
+            renderAlerts();
+          } catch (e) {
+            overviewError = true;
+            renderFreshness();
+            renderTemperatures();
+            renderAlerts();
+          }
+        },
+        () => 5000,
+      );
+      const eventPoll = poller(
+        async () => {
+          try {
+            mergeEventFeed(await getJSON("/api/events?limit=30"));
+          } catch (error) {
+            eventQueryError = true;
+            $("eventsPanel").classList.add("stale-data");
+            text("eventsUpdated", "无法更新，重试中");
+            renderAlerts();
+          }
+        },
+        () => 5000,
+      );
+      function pausePollers() {
+        for (const poll of [fastPoll, overviewPoll, historyPoll, eventPoll])
+          poll.pause();
+        clearInterval(clockTimer);
+      }
+      function showLogin(message) {
+        authUser = null;
+        sessionToken = null;
+        try {
+          localStorage.removeItem("server-info-session");
+        } catch (_) {}
+        pausePollers();
+        const error = $("loginError");
+        error.textContent = message || "";
+        error.hidden = !message;
+        $("bootScreen").hidden = true;
+        $("loginGate").hidden = false;
+        $("appRoot").hidden = true;
+        $("loginPass").value = "";
+        $("loginUser").focus();
+      }
+      function showApp() {
+        $("bootScreen").hidden = true;
+        $("loginGate").hidden = true;
+        $("appRoot").hidden = false;
+        text("userName", authUser || "");
+      }
+      function handleUnauthorized() {
+        if (!$("loginGate").hidden) return;
+        showLogin("登录已过期，请重新登录。");
+      }
+      $("loginForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const submit = $("loginSubmit"),
+          error = $("loginError");
+        submit.disabled = true;
+        error.hidden = true;
+        try {
+          const response = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: $("loginUser").value.trim(),
+              password: $("loginPass").value,
+            }),
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.error || "登录失败");
+          authUser = payload.username || $("loginUser").value.trim();
+          if (payload.token) {
+            sessionToken = payload.token;
+            try {
+              localStorage.setItem("server-info-session", sessionToken);
+            } catch (_) {}
+          }
+          const probe = await fetch("/api/session", { headers: authHeaders() })
+            .then((r) => r.json())
+            .catch(() => null);
+          if (!probe || !probe.authenticated)
+            throw new Error(
+              "登录状态未能保存，请检查浏览器是否允许 Cookie 或本地存储。",
+            );
+          $("loginPass").value = "";
+          showApp();
+          resume();
+        } catch (failure) {
+          error.textContent = failure.message || "登录失败";
+          error.hidden = false;
+        } finally {
+          submit.disabled = false;
+        }
+      });
+      $("logoutButton").addEventListener("click", async () => {
+        try {
+          await fetch("/api/logout", { method: "POST", headers: authHeaders() });
+        } catch (_) {}
+        showLogin("已退出登录。");
+      });
+      async function bootstrap() {
+        try {
+          const session = await getJSON("/api/session");
+          if (!session.authenticated) {
+            showLogin("");
+            return;
+          }
+          authUser = session.username || "";
+          const hours = session.session_hours ?? 12;
+          text(
+            "loginNote",
+            `登录状态仅保存在本浏览器，${hours} 小时内无操作会自动失效。`,
+          );
+          showApp();
+          if (!document.hidden) resume();
+        } catch (error) {
+          showLogin("无法连接后端服务，请稍后刷新页面。");
+        }
+      }
+      $("olderEvents").addEventListener("click", async () => {
+        if (eventCursor === null) return;
+        $("olderEvents").disabled = true;
+        try {
+          const payload = await getJSON(
+            "/api/events?limit=30&before=" + eventCursor,
+          );
+          olderLoaded = true;
+          mergeEventFeed(payload, true);
+        } catch (error) {
+          eventQueryError = true;
+          renderAlerts();
+        } finally {
+          $("olderEvents").disabled = false;
+        }
+      });
+      const historyPoll = poller(
+        async () => {
+          const wanted = [...new Set(Object.values(chartRanges))];
+          try {
+            const results = await Promise.all(
+              wanted.map(async (minutes) => [
+                minutes,
+                await getJSON(`/api/history?minutes=${minutes}`),
+              ]),
+            );
+            const restarted = results.some(
+              ([, payload]) =>
+                serviceStarted !== null &&
+                payload.started_at !== serviceStarted,
+            );
+            if (restarted) {
+              liveHistory = [];
+              serverPoints.clear();
+            }
+            let first = null,
+              hourly = false;
+            for (const [minutes, payload] of results) {
+              serverPoints.set(minutes, {
+                points: payload.points || [],
+                interval: payload.interval || 1,
+              });
+              if (first === null) first = payload.first_sample_at;
+              if (payload.resolution === "hourly") hourly = true;
+              if (payload.points.length && !fast)
+                serverOffset = payload.points.at(-1).t * 1000 - Date.now();
+              serviceStarted = payload.started_at ?? serviceStarted;
+            }
+            text(
+              "historyHint",
+              (first
+                ? `保留 ${retentionDays} 天 · 始于 ${new Date(first * 1000).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}`
+                : `每秒采样 · 保留 ${retentionDays} 天`) +
+                (hourly ? " · 长范围小时聚合" : "") +
+                " · 每个图表可单独选择范围",
+            );
+            drawCharts();
+          } catch (e) {
+            text(
+              "historyHint",
+              "历史数据暂不可用，正在重试；实时数据继续更新。",
+            );
+          }
+        },
+        () => 30000,
+      );
+      $("refreshInterval").addEventListener("change", () => {
+        refreshMs = Number($("refreshInterval").value);
+        try {
+          localStorage.setItem("server-info-refresh", String(refreshMs));
+        } catch (_) {}
+        fastPoll.trigger();
+      });
+      $("refreshButton").addEventListener("click", () => {
+        fastPoll.trigger();
+        overviewPoll.trigger();
+        historyPoll.trigger();
+        eventPoll.trigger();
+      });
+      $("containerSearch").addEventListener("input", renderContainers);
+      $("historyRange").addEventListener("change", () => {
+        globalRange = Number($("historyRange").value);
+        for (const config of chartConfigs) {
+          chartRanges[config.id] = globalRange;
+          const select = document.querySelector(
+            `.chart-range[data-chart="${config.id}"]`,
+          );
+          if (select) select.value = String(globalRange);
+        }
+        if (zoomedChart) $("chartModalRange").value = String(globalRange);
+        drawCharts();
+        historyPoll.trigger();
+      });
+      for (const select of document.querySelectorAll(".chart-range[data-chart]")) {
+        select.addEventListener("change", () => {
+          chartRanges[select.dataset.chart] = Number(select.value);
+          if (zoomedChart && zoomedChart.id === select.dataset.chart)
+            $("chartModalRange").value = select.value;
+          drawCharts();
+          historyPoll.trigger();
+        });
+      }
+      for (const button of document.querySelectorAll(".chart-zoom")) {
+        button.addEventListener("click", () =>
+          openChartModal(button.dataset.chart),
+        );
+      }
+      $("chartModalClose").addEventListener("click", closeChartModal);
+      $("chartModal").addEventListener("click", (event) => {
+        if (event.target === $("chartModal")) closeChartModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !$("chartModal").hidden)
+          closeChartModal();
+      });
+      $("chartModalRange").addEventListener("change", () => {
+        if (!zoomedChart) return;
+        const range = Number($("chartModalRange").value);
+        chartRanges[zoomedChart.id] = range;
+        const select = document.querySelector(
+          `.chart-range[data-chart="${zoomedChart.id}"]`,
+        );
+        if (select) select.value = String(range);
+        drawCharts();
+        historyPoll.trigger();
+      });
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(drawCharts, 100);
+      });
+      function updateClock() {
+        const now = new Date();
+        text(
+          "clock",
+          now.toLocaleString("zh-CN", {
+            month: "long",
+            day: "numeric",
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          }),
+        );
+        try {
+          text(
+            "lunarClock",
+            new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }).format(now),
+          );
+        } catch (_) {
+          text("lunarClock", "");
+        }
+        renderFreshness();
+        renderAlerts();
+      }
+      function resume() {
+        updateClock();
+        clearInterval(clockTimer);
+        clockTimer = setInterval(updateClock, 1000);
+        for (const poll of [fastPoll, overviewPoll, historyPoll, eventPoll])
+          poll.start();
+      }
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) pausePollers();
+        else if (authUser) resume();
+      });
+      bootstrap();
+    </script>
+  </body>
+</html>

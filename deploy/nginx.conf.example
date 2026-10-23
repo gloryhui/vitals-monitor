@@ -1,0 +1,23 @@
+# Serve the built page from the project root and proxy /api/ to Vitals.
+# Adjust root, server_name and the upstream address to your deployment.
+server {
+    listen 80;
+    server_name vitals.example;
+    root /opt/vitals;
+    charset utf-8;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8790;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Keep backend sources, the Vite project and configuration out of the web root.
+    location ~ ^/(backend|web|config|deploy|legacy)/ { deny all; }
+    location ~ ^/[^/]+\.(py|md|json|sh|service)$ { deny all; }
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
