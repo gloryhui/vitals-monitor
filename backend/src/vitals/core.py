@@ -241,10 +241,40 @@ def collect_smart():
 def collect_containers():
     require_tool("docker")
     rows = [json.loads(line) for line in run(["docker", "ps", "-a", "--format", "{{json .}}"]).splitlines() if line]
-    return [{"name": row["Names"], "state": row["State"], "status": row["Status"],
-             "image": row["Image"],
-             "health": "unhealthy" if "(unhealthy)" in row["Status"] else "starting" if "(health: starting)" in row["Status"] else "healthy" if "(healthy)" in row["Status"] else None}
+    return [{"id": (row.get("ID") or "")[:12], "name": row["Names"], "state": row["State"],
+             "status": row["Status"], "image": row["Image"],
+             "health": "unhealthy" if "(unhealthy)" in row["Status"] else "starting" if "(health: starting)" in row["Status"] else "healthy" if "(healthy)" in row["Status"] else None,
+             "command": (row.get("Command") or "")[:160],
+             "created_at": row.get("CreatedAt"), "running_for": row.get("RunningFor"),
+             "ports": row.get("Ports") or "", "networks": row.get("Networks") or "",
+             "mounts": (row.get("Mounts") or "")[:200]}
             for row in sorted(rows, key=lambda row: (row["State"] != "running", row["Names"]))]
+
+
+def collect_images():
+    require_tool("docker")
+    images = [json.loads(line) for line in run(["docker", "images", "--format", "{{json .}}"]).splitlines() if line]
+    containers = [json.loads(line) for line in run(["docker", "ps", "-a", "--format", "{{json .}}"]).splitlines() if line]
+    used = {row.get("Image", "") for row in containers}
+    rows = []
+    for image in images:
+        repository = image.get("Repository") or "<none>"
+        tag = image.get("Tag") or "<none>"
+        image_id = (image.get("ID") or "").replace("sha256:", "")[:12]
+        reference = f"{repository}:{tag}" if repository != "<none>" and tag != "<none>" else repository
+        digest = image.get("Digest")
+        rows.append({
+            "id": image_id,
+            "repository": repository,
+            "tag": tag,
+            "ref": reference,
+            "digest": None if not digest or digest == "<none>" else digest,
+            "size": image.get("Size"),
+            "created": image.get("CreatedSince") or image.get("CreatedAt"),
+            "in_use": reference in used or image_id in used,
+            "dangling": repository == "<none>" or tag == "<none>",
+        })
+    return sorted(rows, key=lambda item: (not item["in_use"], item["repository"], item["tag"]))
 
 
 def collect_docker_usage():
@@ -325,7 +355,8 @@ def collect_services():
 COLLECTORS = {
     "temperatures": (5, temperatures), "filesystems": (30, filesystem_usage),
     "network_info": (30, collect_network_info), "containers": (15, collect_containers),
-    "smart": (60, collect_smart), "docker_usage": (300, collect_docker_usage), "system": (3600, collect_system),
+    "smart": (60, collect_smart), "docker_images": (60, collect_images),
+    "docker_usage": (300, collect_docker_usage), "system": (3600, collect_system),
     "processes": (5, _process_sampler.collect), "services": (15, collect_services),
 }
 

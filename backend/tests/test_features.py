@@ -24,6 +24,36 @@ class CapabilityTest(unittest.TestCase):
             with self.assertRaises(feature.UnsupportedCollector):
                 monitor.temperatures()
 
+    def test_containers_expose_ports_command_and_runtime(self):
+        payload = json.dumps({"ID": "abc123def456", "Names": "web", "Image": "nginx:latest",
+                              "State": "running", "Status": "Up 2 hours", "Command": "\"nginx -g\"",
+                              "Ports": "0.0.0.0:80->80/tcp", "RunningFor": "2 hours ago",
+                              "Networks": "bridge", "Mounts": "/a,/b", "CreatedAt": "2026-10-22"})
+        with patch.object(monitor, "require_tool"), patch.object(monitor, "run", return_value=payload):
+            rows = monitor.collect_containers()
+        self.assertEqual(rows[0]["id"], "abc123def456")
+        self.assertEqual(rows[0]["ports"], "0.0.0.0:80->80/tcp")
+        self.assertEqual(rows[0]["running_for"], "2 hours ago")
+        self.assertIn("nginx", rows[0]["command"])
+
+    def test_docker_images_mark_usage_and_dangling(self):
+        images = "\n".join([
+            json.dumps({"Repository": "nginx", "Tag": "latest", "ID": "abc123def456", "Size": "100MB",
+                        "CreatedSince": "1 day ago", "Digest": "<none>"}),
+            json.dumps({"Repository": "<none>", "Tag": "<none>", "ID": "deadbeef0000", "Size": "50MB",
+                        "CreatedSince": "2 days ago", "Digest": "<none>"}),
+        ])
+        containers = json.dumps({"Image": "nginx:latest", "Names": "web", "State": "running", "Status": "Up"})
+        with patch.object(monitor, "require_tool"), patch.object(monitor, "run", side_effect=[images, containers]):
+            rows = monitor.collect_images()
+        self.assertEqual(len(rows), 2)
+        used = [row for row in rows if row["in_use"]]
+        self.assertEqual(len(used), 1)
+        self.assertEqual(used[0]["ref"], "nginx:latest")
+        dangling = [row for row in rows if row["dangling"]]
+        self.assertEqual(len(dangling), 1)
+        self.assertEqual(dangling[0]["repository"], "<none>")
+
     def test_missing_docker_is_unsupported(self):
         with patch('vitals.features.shutil.which', return_value=None):
             with self.assertRaises(feature.UnsupportedCollector):

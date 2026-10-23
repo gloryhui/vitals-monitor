@@ -7,11 +7,11 @@ Read-only Linux server status dashboard: 1-second live metrics, 90-day SQLite hi
 ## Features
 
 - **Live metrics**: CPU (per core + frequency), memory, load, uptime, network throughput, physical disk I/O — every second.
-- **Slow collectors**: temperatures (5s), top processes (5s), containers and service checks (15s), filesystem usage and link info (30s), SMART (60s, never wakes standby disks), Docker space (5min), system/hardware inventory (1h).
+- **Slow collectors**: temperatures (5s), top processes (5s), containers and service checks (15s), filesystem usage and link info (30s), SMART and Docker images (60s, never wakes standby disks), Docker space (5min), system/hardware inventory (1h).
 - **Bounded archive**: SQLite with WAL, zlib-compressed payloads, 90-day retention (configurable) and hourly rollup for 30/90-day charts.
 - **Incident journal**: threshold + hysteresis, restart-safe pending state, no fabricated recoveries.
 - **Authentication**: scrypt password hashes, SHA-256 session digests, `HttpOnly` cookie plus Bearer fallback for browsers that block cookies, per-client login throttling.
-- **UI**: per-chart time range (10 minutes – 90 days), zoom modal, detail drawers (every process in a virtualized list with search/sort, full temperature, storage, network, paginated containers, services), light/dark theme, responsive layout.
+- **UI**: per-chart time range (10 minutes – 90 days), zoom modal, detail drawers (every process in a virtualized list, full temperature, storage, network, containers with state filters and pagination plus an image inventory, services), light/dark theme, responsive layout.
 
 ## Architecture
 
