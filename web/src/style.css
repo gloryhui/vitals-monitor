@@ -1340,3 +1340,45 @@ summary:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* compact status strip (only shown when something needs attention) */
+.status-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: -6px 4px 18px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--amber) 28%, var(--line));
+  background: color-mix(in srgb, var(--amber) 7%, var(--surface));
+  font-size: 12px;
+}
+
+.status-strip .strip-title {
+  font-weight: 600;
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.status-strip .strip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.status-strip .strip-item i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+.status-strip .strip-item.bad {
+  color: var(--red);
+}
+
+.status-strip .strip-item.bad i {
+  background: var(--red);
+}

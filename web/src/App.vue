@@ -4,8 +4,8 @@
   <div v-else class="shell">
     <TopBar :clock="clock" :lunar="lunar" />
     <HeroPanel />
+    <StatusStrip />
     <BasicsCard />
-    <AlertsCard />
     <ServicesCard />
     <ResourceSection @zoom="openZoom" />
     <EventsCard />
@@ -21,12 +21,12 @@ import { CHARTS } from "./charts";
 import TopBar from "./components/TopBar.vue";
 import HeroPanel from "./components/HeroPanel.vue";
 import BasicsCard from "./components/BasicsCard.vue";
-import AlertsCard from "./components/AlertsCard.vue";
 import ServicesCard from "./components/ServicesCard.vue";
 import ResourceSection from "./components/ResourceSection.vue";
 import EventsCard from "./components/EventsCard.vue";
 import FooterBar from "./components/FooterBar.vue";
 import ChartModal from "./components/ChartModal.vue";
+import StatusStrip from "./components/StatusStrip.vue";
 import LoginView from "./components/LoginView.vue";
 
 const dash = createDashboard();

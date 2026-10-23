@@ -6,6 +6,7 @@
       <p class="subtitle">{{ subtitle }}</p>
     </div>
     <div class="hero-actions">
+      <span class="pill" :class="healthTone">{{ healthText }}</span>
       <span class="live" :class="liveTone" role="status">
         <i></i>{{ liveText }}
       </span>
@@ -23,7 +24,7 @@
         <option :value="30000">每 30 秒刷新</option>
       </select>
       <button class="btn" type="button" @click="dash.refreshAll()">
-        <svg fill="none" stroke="currentColor" stroke-width="1.7">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
           <path d="M20 7v5h-5M4 17v-5h5" />
           <path d="M6 6a8 8 0 0 1 13 3M5 15a8 8 0 0 0 13 3" />
         </svg>
@@ -54,5 +55,17 @@ const liveTone = computed(() => (dash.online.value ? "" : dash.state.fast ? "war
 const liveText = computed(() => {
   if (!dash.state.fast) return dash.state.fastError ? "连接失败" : "连接中";
   return dash.online.value ? "实时更新" : "数据已过期";
+});
+
+const healthTone = computed(() => {
+  const alerts = dash.alerts.value;
+  if (alerts.length) return alerts.some((item) => item.tone === "bad") ? "bad" : "warn";
+  return dash.allReady.value ? "good" : "";
+});
+
+const healthText = computed(() => {
+  const alerts = dash.alerts.value;
+  if (alerts.length) return `${alerts.length} 项待处理`;
+  return dash.allReady.value ? "运行正常" : "检查中";
 });
 </script>

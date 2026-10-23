@@ -26,7 +26,7 @@
         title="放大查看"
         @click="$emit('zoom', chartId)"
       >
-        <svg fill="none" stroke="currentColor" stroke-width="1.7">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
           <path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5" />
         </svg>
       </button>

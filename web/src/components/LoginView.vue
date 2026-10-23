@@ -2,7 +2,7 @@
   <div class="login-shell">
     <form class="login-card" @submit.prevent="submit">
       <div class="login-mark">
-        <svg fill="none" stroke="currentColor" stroke-width="1.6">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
           <rect x="3" y="4" width="18" height="7" rx="2" />
           <rect x="3" y="13" width="18" height="7" rx="2" />
           <path d="M7 7.5h.01M7 16.5h.01" />
