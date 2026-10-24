@@ -1713,3 +1713,30 @@ summary:hover {
   white-space: pre-wrap;
   min-width: 240px;
 }
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.health-grid span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.health-grid strong {
+  display: block;
+  margin-top: 2px;
+  font: 600 15px var(--mono);
+}
+
+.health-grid strong.bad {
+  color: var(--red);
+}
+
+.health-grid .meter {
+  margin-top: 6px;
+  height: 4px;
+}

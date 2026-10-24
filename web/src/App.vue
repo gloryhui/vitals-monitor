@@ -7,6 +7,7 @@
     <StatusStrip />
     <BasicsCard />
     <ServicesCard @detail="openDetail('services')" />
+    <HealthCard />
     <ResourceSection @zoom="openZoom" @detail="openDetail" />
     <EventsCard />
     <FooterBar />
@@ -23,6 +24,7 @@ import TopBar from "./components/TopBar.vue";
 import HeroPanel from "./components/HeroPanel.vue";
 import BasicsCard from "./components/BasicsCard.vue";
 import ServicesCard from "./components/ServicesCard.vue";
+import HealthCard from "./components/HealthCard.vue";
 import ResourceSection from "./components/ResourceSection.vue";
 import EventsCard from "./components/EventsCard.vue";
 import FooterBar from "./components/FooterBar.vue";

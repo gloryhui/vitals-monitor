@@ -4,7 +4,7 @@
       <h3>分区容量</h3>
       <table class="dtable">
         <thead>
-          <tr><th>挂载点</th><th>设备</th><th>类型</th><th class="num">已用 / 总量</th><th class="num">可用</th><th class="num">使用率</th></tr>
+          <tr><th>挂载点</th><th>设备</th><th>类型</th><th class="num">已用 / 总量</th><th class="num">可用</th><th class="num">使用率</th><th class="num">Inode</th></tr>
         </thead>
         <tbody>
           <tr v-for="fs in filesystems" :key="fs.mount">
@@ -14,8 +14,9 @@
             <td class="num mono">{{ fmtBytes(fs.used_bytes) }} / {{ fmtBytes(fs.size_bytes) }}</td>
             <td class="num mono">{{ fmtBytes(fs.avail_bytes) }}</td>
             <td class="num mono" :class="fsTone(fs)">{{ fs.used_percent }}%</td>
+            <td class="num mono">{{ fs.inode_percent != null ? `${fs.inode_percent}%` : "—" }}</td>
           </tr>
-          <tr v-if="!filesystems.length"><td colspan="6" class="muted">正在读取分区…</td></tr>
+          <tr v-if="!filesystems.length"><td colspan="7" class="muted">正在读取分区…</td></tr>
         </tbody>
       </table>
     </section>

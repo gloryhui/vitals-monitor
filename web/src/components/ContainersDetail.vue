@@ -27,7 +27,7 @@
         <table class="dtable">
           <thead>
             <tr>
-              <th>ID</th><th>名称</th><th>镜像</th><th>状态</th><th>端口</th><th>运行时长</th><th>命令</th>
+              <th>ID</th><th>名称</th><th>镜像</th><th>状态</th><th class="num">CPU</th><th class="num">内存</th><th>端口</th><th>运行时长</th><th>命令</th>
             </tr>
           </thead>
           <tbody>
@@ -36,11 +36,13 @@
               <td class="mono">{{ item.name }}</td>
               <td class="mono">{{ item.image }}</td>
               <td :class="tone(item)">{{ stateLabel(item) }}</td>
+              <td class="num mono">{{ stats[item.name]?.cpu_percent || "—" }}</td>
+              <td class="num mono">{{ stats[item.name]?.mem_usage || "—" }}</td>
               <td class="mono">{{ item.ports || "—" }}</td>
               <td>{{ item.running_for || item.status }}</td>
               <td class="mono cmd" :title="item.command">{{ item.command || "—" }}</td>
             </tr>
-            <tr v-if="!paged.length"><td colspan="7" class="muted">没有匹配的容器</td></tr>
+            <tr v-if="!paged.length"><td colspan="9" class="muted">没有匹配的容器</td></tr>
           </tbody>
         </table>
       </div>
@@ -98,6 +100,9 @@ import { computed, inject, ref, watch } from "vue";
 const dash = inject("dash");
 const rows = computed(() => dash.groupData("containers") || []);
 const images = computed(() => dash.groupData("docker_images") || []);
+const stats = computed(() =>
+  Object.fromEntries((dash.groupData("docker_stats") || []).map((row) => [row.name, row])),
+);
 
 const stateFilter = ref("all");
 const query = ref("");

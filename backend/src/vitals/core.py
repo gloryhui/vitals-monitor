@@ -98,7 +98,7 @@ def cpu_snapshot():
         parts = line.split()
         if parts and re.fullmatch(r"cpu\d*", parts[0]) and len(parts) >= 6:
             values = list(map(int, parts[1:9]))
-            result[parts[0]] = (sum(values), values[3] + values[4])
+            result[parts[0]] = (sum(values), values[3], values[4], values[7])
     if "cpu" not in result:
         raise RuntimeError("无法读取 CPU 计数器")
     return result
@@ -185,8 +185,16 @@ def filesystem_usage():
         parts = line.split(None, 6)
         if len(parts) == 7 and parts[0].startswith("/dev/"):
             source, fs_type, size, used, avail, percent, mount = parts
+            inode_percent = None
+            try:
+                stats = os.statvfs(mount)
+                if stats.f_files:
+                    inode_percent = round((stats.f_files - stats.f_ffree) / stats.f_files * 100, 1)
+            except OSError:
+                pass
             rows.append({"source": source, "type": fs_type, "mount": mount, "size_bytes": int(size),
-                         "used_bytes": int(used), "avail_bytes": int(avail), "used_percent": int(percent.rstrip("%"))})
+                         "used_bytes": int(used), "avail_bytes": int(avail), "used_percent": int(percent.rstrip("%")),
+                         "inode_percent": inode_percent})
     return rows
 
 
@@ -277,6 +285,61 @@ def collect_images():
     return sorted(rows, key=lambda item: (not item["in_use"], item["repository"], item["tag"]))
 
 
+def collect_host_health():
+    fd_used = fd_max = None
+    try:
+        parts = read_text("/proc/sys/fs/file-nr").split()
+        fd_used = int(parts[0])
+    except (OSError, ValueError, IndexError):
+        pass
+    try:
+        fd_max = int(read_text("/proc/sys/fs/nr_open").split()[0])
+    except (OSError, ValueError, IndexError):
+        try:
+            fd_max = int(os.sysconf("SC_OPEN_MAX"))
+        except (ValueError, OSError):
+            fd_max = None
+    zombies = 0
+    try:
+        for entry in os.listdir("/proc"):
+            if not entry.isdigit():
+                continue
+            try:
+                stat = read_text(f"/proc/{entry}/stat")
+                if stat[stat.rindex(")") + 2:].split()[0] == "Z":
+                    zombies += 1
+            except (OSError, ValueError, IndexError):
+                continue
+    except OSError:
+        pass
+    failed = None
+    try:
+        output = run(["systemctl", "--failed", "--no-legend", "--plain"], allow_nonzero=True)
+        failed = len([line for line in output.splitlines() if line.strip()])
+    except (OSError, RuntimeError, subprocess.SubprocessError):
+        pass
+    tcp = 0
+    for path in ("/proc/net/tcp", "/proc/net/tcp6"):
+        try:
+            for line in read_text(path).splitlines()[1:]:
+                parts = line.split()
+                if len(parts) > 3 and parts[3] == "01":
+                    tcp += 1
+        except OSError:
+            continue
+    return {"fd_used": fd_used, "fd_max": fd_max,
+            "fd_percent": round(fd_used / fd_max * 100, 1) if fd_used and fd_max else None,
+            "zombies": zombies, "systemd_failed": failed, "tcp_established": tcp}
+
+
+def collect_docker_stats():
+    require_tool("docker")
+    rows = [json.loads(line) for line in run(["docker", "stats", "--no-stream", "--format", "{{json .}}"], timeout=10).splitlines() if line]
+    return [{"name": row.get("Name"), "cpu_percent": row.get("CPUPerc"), "mem_usage": row.get("MemUsage"),
+             "mem_percent": row.get("MemPerc"), "net_io": row.get("NetIO"), "block_io": row.get("BlockIO"),
+             "pids": row.get("PIDs")} for row in rows]
+
+
 def collect_docker_usage():
     require_tool("docker")
     return [json.loads(line) for line in run(["docker", "system", "df", "--format", "{{json .}}"], timeout=30).splitlines() if line]
@@ -356,6 +419,7 @@ COLLECTORS = {
     "temperatures": (5, temperatures), "filesystems": (30, filesystem_usage),
     "network_info": (30, collect_network_info), "containers": (15, collect_containers),
     "smart": (60, collect_smart), "docker_images": (60, collect_images),
+    "host_health": (60, collect_host_health), "docker_stats": (30, collect_docker_stats),
     "docker_usage": (300, collect_docker_usage), "system": (3600, collect_system),
     "processes": (5, _process_sampler.collect), "services": (15, collect_services),
 }
@@ -429,11 +493,15 @@ def sample_once(previous):
     iface = default_iface()
     cur_net = net_snapshot(iface)
     cpu = []
-    for name, (total, idle) in cur_cpu.items():
-        old_total, old_idle = prev_cpu.get(name, (total, idle))
+    for name, value in cur_cpu.items():
+        total, idle, iowait, steal = (list(value) + [0, 0, 0])[:4]
+        old_total, old_idle, old_iowait, old_steal = (list(prev_cpu.get(name, (total, idle, iowait, steal))) + [0, 0, 0])[:4]
         dt = total - old_total
         usage = max(0, min(100, (dt - (idle - old_idle)) / dt * 100)) if dt > 0 else None
-        core = {"name": name, "usage_percent": round(usage, 1) if usage is not None else None}
+        iowait_percent = round(max(0, (iowait - old_iowait) / dt * 100), 1) if dt > 0 else None
+        steal_percent = round(max(0, (steal - old_steal) / dt * 100), 1) if dt > 0 else None
+        core = {"name": name, "usage_percent": round(usage, 1) if usage is not None else None,
+                "iowait_percent": iowait_percent, "steal_percent": steal_percent}
         if name != "cpu":
             freq = number(read_text(f"/sys/devices/system/cpu/{name}/cpufreq/scaling_cur_freq"))
             core["mhz"] = round(freq / 1000) if freq else None
@@ -449,10 +517,16 @@ def sample_once(previous):
                 "hostname": socket.gethostname(), "uptime_seconds": number(read_text("/proc/uptime").split()[0]),
                 "load": [round(value, 2) for value in os.getloadavg()],
                 "cpu": {"usage_percent": next(item["usage_percent"] for item in cpu if item["name"] == "cpu"),
+                        "iowait_percent": next(item["iowait_percent"] for item in cpu if item["name"] == "cpu"),
+                        "steal_percent": next(item["steal_percent"] for item in cpu if item["name"] == "cpu"),
                         "per_core": [item for item in cpu if item["name"] != "cpu"]},
                 "memory": memory_info(), "disk_io": disk_io,
                 "network": {"interface": iface, "operstate": read_text(f"/sys/class/net/{iface}/operstate").strip(),
-                            "rx_bps": rate(cur_net[0], old_net[0], elapsed), "tx_bps": rate(cur_net[1], old_net[1], elapsed)}}
+                            "rx_bps": rate(cur_net[0], old_net[0], elapsed), "tx_bps": rate(cur_net[1], old_net[1], elapsed),
+                            "rx_errors": number(read_text(f"/sys/class/net/{iface}/statistics/rx_errors")) if iface else None,
+                            "tx_errors": number(read_text(f"/sys/class/net/{iface}/statistics/tx_errors")) if iface else None,
+                            "rx_dropped": number(read_text(f"/sys/class/net/{iface}/statistics/rx_dropped")) if iface else None,
+                            "tx_dropped": number(read_text(f"/sys/class/net/{iface}/statistics/tx_dropped")) if iface else None}}
     return snapshot, (cur_cpu, cur_disk, iface, cur_net, now)
 
 

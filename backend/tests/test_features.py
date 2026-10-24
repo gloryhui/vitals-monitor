@@ -36,6 +36,44 @@ class CapabilityTest(unittest.TestCase):
         self.assertEqual(rows[0]["running_for"], "2 hours ago")
         self.assertIn("nginx", rows[0]["command"])
 
+    def test_cpu_snapshot_reports_iowait_and_steal(self):
+        stat = "cpu  1 0 1 1 2 0 0 3 0 0\ncpu0 1 0 1 1 2 0 0 3 0 0\n"
+        with patch.object(monitor, "read_text", return_value=stat):
+            data = monitor.cpu_snapshot()
+        self.assertEqual(data["cpu"], (8, 1, 2, 3))
+
+    def test_host_health_collects_fd_zombies_tcp_and_systemd(self):
+        def read(path):
+            if path == "/proc/sys/fs/file-nr":
+                return "100 0 1000"
+            if path == "/proc/sys/fs/nr_open":
+                return "1000"
+            if path == "/proc/net/tcp":
+                return "hdr\n a b c 01\n d e f 06\n"
+            if path == "/proc/net/tcp6":
+                return "hdr\n"
+            if path.endswith("/stat"):
+                return "1 (z) Z 1 1 1 1 0 0 0 0 0"
+            return ""
+
+        with patch.object(monitor, "read_text", side_effect=read), \
+                patch.object(monitor.os, "listdir", return_value=["1", "self"]), \
+                patch.object(monitor, "run", return_value="failed.service loaded failed failed\n"):
+            data = monitor.collect_host_health()
+        self.assertEqual(data["fd_percent"], 10.0)
+        self.assertEqual(data["zombies"], 1)
+        self.assertEqual(data["systemd_failed"], 1)
+        self.assertEqual(data["tcp_established"], 1)
+
+    def test_docker_stats_are_parsed(self):
+        payload = json.dumps({"Name": "web", "CPUPerc": "1.5%", "MemUsage": "10MiB / 1GiB",
+                              "MemPerc": "1%", "NetIO": "1kB / 2kB", "BlockIO": "0B / 0B", "PIDs": "3"})
+        with patch.object(monitor, "require_tool"), patch.object(monitor, "run", return_value=payload):
+            rows = monitor.collect_docker_stats()
+        self.assertEqual(rows[0]["name"], "web")
+        self.assertEqual(rows[0]["cpu_percent"], "1.5%")
+        self.assertEqual(rows[0]["pids"], "3")
+
     def test_docker_images_mark_usage_and_dangling(self):
         images = "\n".join([
             json.dumps({"Repository": "nginx", "Tag": "latest", "ID": "abc123def456", "Size": "100MB",
