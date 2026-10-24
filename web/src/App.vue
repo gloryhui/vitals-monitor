@@ -5,9 +5,7 @@
     <TopBar :clock="clock" :lunar="lunar" />
     <HeroPanel />
     <StatusStrip />
-    <BasicsCard />
-    <ServicesCard @detail="openDetail('services')" />
-    <HealthCard />
+    <SystemOverview @detail="openDetail('services')" />
     <ResourceSection @zoom="openZoom" @detail="openDetail" />
     <EventsCard />
     <FooterBar />
@@ -22,14 +20,12 @@ import { createDashboard } from "./useDashboard";
 import { CHARTS } from "./charts";
 import TopBar from "./components/TopBar.vue";
 import HeroPanel from "./components/HeroPanel.vue";
-import BasicsCard from "./components/BasicsCard.vue";
-import ServicesCard from "./components/ServicesCard.vue";
-import HealthCard from "./components/HealthCard.vue";
 import ResourceSection from "./components/ResourceSection.vue";
 import EventsCard from "./components/EventsCard.vue";
 import FooterBar from "./components/FooterBar.vue";
 import ChartModal from "./components/ChartModal.vue";
 import StatusStrip from "./components/StatusStrip.vue";
+import SystemOverview from "./components/SystemOverview.vue";
 import DetailDrawer from "./components/DetailDrawer.vue";
 import LoginView from "./components/LoginView.vue";
 
