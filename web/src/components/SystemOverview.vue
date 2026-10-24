@@ -12,31 +12,15 @@
       <div class="row-head">
         <span class="row-kicker">基本信息</span>
       </div>
-      <div class="basics-row">
-        <div class="basics-primary">
-          <div class="key-fact">
-            <strong>{{ system.os || "—" }}</strong>
-            <span>操作系统</span>
-          </div>
-          <div class="key-fact">
-            <strong>{{ cpuShort }}</strong>
-            <span>处理器 · {{ system.cpu_threads }} 线程</span>
-          </div>
-          <div class="key-fact">
-            <strong>{{ memoryText }}</strong>
-            <span>内存配置</span>
-          </div>
-          <div class="key-fact">
-            <strong>{{ uptimeText }}</strong>
-            <span>运行时间</span>
-          </div>
-        </div>
-        <div class="basics-secondary">
-          <div><span>网络地址</span><strong>{{ networkText }}</strong></div>
-          <div><span>内核 / 架构</span><strong>{{ kernelText }}</strong></div>
-          <div><span>主板</span><strong>{{ system.board || "—" }}</strong></div>
-          <div><span>时区 / 环境</span><strong>{{ environmentText }}</strong></div>
-        </div>
+      <div class="basics-grid">
+        <div class="fact major"><span>操作系统</span><strong>{{ system.os || "—" }}</strong></div>
+        <div class="fact major"><span>处理器 · {{ system.cpu_threads }} 线程</span><strong>{{ cpuShort }}</strong></div>
+        <div class="fact major"><span>内存配置</span><strong>{{ memoryText }}</strong></div>
+        <div class="fact major"><span>运行时间</span><strong>{{ uptimeText }}</strong></div>
+        <div class="fact minor"><span>网络地址</span><strong>{{ networkText }}</strong></div>
+        <div class="fact minor"><span>内核 / 架构</span><strong>{{ kernelText }}</strong></div>
+        <div class="fact minor"><span>主板</span><strong :title="system.board">{{ system.board || "—" }}</strong></div>
+        <div class="fact minor"><span>时区 / 环境</span><strong>{{ environmentText }}</strong></div>
       </div>
     </div>
 
@@ -61,7 +45,6 @@
         </div>
         <div v-if="!services.length" class="note">暂无服务检查配置</div>
       </div>
-      <p class="note">每 15 秒检查一次，连续失败 3 次记异常，连续成功 2 次记恢复。</p>
     </div>
 
     <div class="overview-row">
@@ -70,19 +53,17 @@
       </div>
       <div class="health-row">
         <div class="health-main">
-          <span class="health-label">文件描述符</span>
-          <strong class="health-big">{{ health.fd_used ?? "—" }}<small> / {{ health.fd_max ?? "—" }}</small></strong>
+          <span>文件描述符</span>
+          <strong>{{ health.fd_used ?? "—" }}<small> / {{ health.fd_max ?? "—" }}</small></strong>
           <div class="meter" :class="fdTone"><i :style="{ width: `${health.fd_percent || 0}%` }"></i></div>
-          <span class="health-pct">已使用 {{ health.fd_percent ?? "—" }}%</span>
+          <em>已使用 {{ health.fd_percent ?? "—" }}%</em>
         </div>
-        <div class="health-facts">
-          <div><span>僵尸进程</span><b :class="{ bad: health.zombies > 0 }">{{ health.zombies ?? "—" }}</b></div>
-          <div><span>systemd 失败</span><b :class="{ bad: health.systemd_failed > 0 }">{{ health.systemd_failed ?? "—" }}</b></div>
-          <div><span>TCP 已建立</span><b>{{ health.tcp_established ?? "—" }}</b></div>
-          <div><span>OOM 次数</span><b :class="{ bad: health.oom_kill > 0 }">{{ health.oom_kill ?? "—" }}</b></div>
-          <div><span>CPU iowait</span><b>{{ iowaitText }}</b></div>
-          <div><span>CPU steal</span><b>{{ stealText }}</b></div>
-        </div>
+        <div class="fact"><span>僵尸进程</span><strong :class="{ bad: health.zombies > 0 }">{{ health.zombies ?? "—" }}</strong></div>
+        <div class="fact"><span>systemd 失败</span><strong :class="{ bad: health.systemd_failed > 0 }">{{ health.systemd_failed ?? "—" }}</strong></div>
+        <div class="fact"><span>TCP 已建立</span><strong>{{ health.tcp_established ?? "—" }}</strong></div>
+        <div class="fact"><span>OOM 次数</span><strong :class="{ bad: health.oom_kill > 0 }">{{ health.oom_kill ?? "—" }}</strong></div>
+        <div class="fact"><span>CPU iowait</span><strong>{{ iowaitText }}</strong></div>
+        <div class="fact"><span>CPU steal</span><strong>{{ stealText }}</strong></div>
       </div>
     </div>
   </section>
