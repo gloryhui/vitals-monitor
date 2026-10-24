@@ -8,57 +8,80 @@
       </div>
     </div>
 
-    <div class="overview-grid">
-      <div class="overview-col">
-        <h3 class="col-title">基本信息</h3>
-        <div class="info-grid">
-          <div><span>操作系统</span><strong>{{ system.os || "—" }}</strong></div>
-          <div><span>处理器</span><strong>{{ cpuText }}</strong></div>
-          <div><span>内存配置</span><strong>{{ memoryText }}</strong></div>
+    <div class="overview-row">
+      <div class="row-head">
+        <span class="row-kicker">基本信息</span>
+      </div>
+      <div class="basics-row">
+        <div class="basics-primary">
+          <div class="key-fact">
+            <strong>{{ system.os || "—" }}</strong>
+            <span>操作系统</span>
+          </div>
+          <div class="key-fact">
+            <strong>{{ cpuShort }}</strong>
+            <span>处理器 · {{ system.cpu_threads }} 线程</span>
+          </div>
+          <div class="key-fact">
+            <strong>{{ memoryText }}</strong>
+            <span>内存配置</span>
+          </div>
+          <div class="key-fact">
+            <strong>{{ uptimeText }}</strong>
+            <span>运行时间</span>
+          </div>
+        </div>
+        <div class="basics-secondary">
           <div><span>网络地址</span><strong>{{ networkText }}</strong></div>
           <div><span>内核 / 架构</span><strong>{{ kernelText }}</strong></div>
-          <div><span>运行时间</span><strong>{{ uptimeText }}</strong></div>
           <div><span>主板</span><strong>{{ system.board || "—" }}</strong></div>
           <div><span>时区 / 环境</span><strong>{{ environmentText }}</strong></div>
         </div>
       </div>
+    </div>
 
-      <div class="overview-col">
-        <div class="col-title">
-          <h3>服务检查</h3>
-          <div class="col-tools">
-            <span class="pill" :class="serviceTone">{{ serviceSummary }}</span>
-            <button class="btn btn-sm" type="button" @click="$emit('detail')">详情</button>
-          </div>
+    <div class="overview-row">
+      <div class="row-head">
+        <span class="row-kicker">服务检查</span>
+        <div class="col-tools">
+          <span class="pill" :class="serviceTone">{{ serviceSummary }}</span>
+          <button class="btn btn-sm" type="button" @click="$emit('detail')">详情</button>
         </div>
-        <div class="service-mini">
-          <div v-for="item in services" :key="item.id" class="service-mini-row" :class="{ bad: !item.ok }">
+      </div>
+      <div class="service-row">
+        <div v-for="item in services" :key="item.id" class="service-chip" :class="{ bad: !item.ok }">
+          <div class="service-chip-top">
             <i></i>
             <span class="name">{{ item.name }}</span>
-            <span class="meta">{{ item.ok ? item.detail : "检查失败" }}</span>
-            <span class="latency mono">{{ item.latency_ms }} ms</span>
           </div>
-          <div v-if="!services.length" class="note">暂无服务检查配置</div>
+          <div class="service-chip-meta">
+            <span>{{ item.ok ? item.detail : "检查失败" }}</span>
+            <b>{{ item.latency_ms }} ms</b>
+          </div>
         </div>
-        <p class="note">每 15 秒检查一次，连续失败 3 次记异常，连续成功 2 次记恢复。</p>
+        <div v-if="!services.length" class="note">暂无服务检查配置</div>
       </div>
+      <p class="note">每 15 秒检查一次，连续失败 3 次记异常，连续成功 2 次记恢复。</p>
+    </div>
 
-      <div class="overview-col">
-        <h3 class="col-title">系统健康</h3>
-        <div class="health-mini">
-          <div class="health-line">
-            <span>文件描述符</span>
-            <b>{{ health.fd_used != null ? `${health.fd_used} / ${health.fd_max}` : "—" }}</b>
-          </div>
+    <div class="overview-row">
+      <div class="row-head">
+        <span class="row-kicker">系统健康</span>
+      </div>
+      <div class="health-row">
+        <div class="health-main">
+          <span class="health-label">文件描述符</span>
+          <strong class="health-big">{{ health.fd_used ?? "—" }}<small> / {{ health.fd_max ?? "—" }}</small></strong>
           <div class="meter" :class="fdTone"><i :style="{ width: `${health.fd_percent || 0}%` }"></i></div>
-          <div class="health-pairs">
-            <div><span>僵尸进程</span><b :class="{ bad: health.zombies > 0 }">{{ health.zombies ?? "—" }}</b></div>
-            <div><span>systemd 失败</span><b :class="{ bad: health.systemd_failed > 0 }">{{ health.systemd_failed ?? "—" }}</b></div>
-            <div><span>TCP 已建立</span><b>{{ health.tcp_established ?? "—" }}</b></div>
-            <div><span>OOM 次数</span><b :class="{ bad: health.oom_kill > 0 }">{{ health.oom_kill ?? "—" }}</b></div>
-            <div><span>CPU iowait</span><b>{{ iowaitText }}</b></div>
-            <div><span>CPU steal</span><b>{{ stealText }}</b></div>
-          </div>
+          <span class="health-pct">已使用 {{ health.fd_percent ?? "—" }}%</span>
+        </div>
+        <div class="health-facts">
+          <div><span>僵尸进程</span><b :class="{ bad: health.zombies > 0 }">{{ health.zombies ?? "—" }}</b></div>
+          <div><span>systemd 失败</span><b :class="{ bad: health.systemd_failed > 0 }">{{ health.systemd_failed ?? "—" }}</b></div>
+          <div><span>TCP 已建立</span><b>{{ health.tcp_established ?? "—" }}</b></div>
+          <div><span>OOM 次数</span><b :class="{ bad: health.oom_kill > 0 }">{{ health.oom_kill ?? "—" }}</b></div>
+          <div><span>CPU iowait</span><b>{{ iowaitText }}</b></div>
+          <div><span>CPU steal</span><b>{{ stealText }}</b></div>
         </div>
       </div>
     </div>
@@ -83,28 +106,16 @@ const environmentLabel = computed(() =>
   [environment.value.provider, environment.value.label].filter(Boolean).join(" · ") || "检测中",
 );
 const sampledAt = computed(() => (fast.value ? fmtTime(fast.value.generated_at) : "—"));
-const cpuText = computed(() => {
-  const threads = system.value.cpu_threads;
-  return (
-    [system.value.cpu_model, threads ? `${threads}${environment.value.kind === "vm" ? " vCPU" : " 线程"}` : null]
-      .filter(Boolean)
-      .join(" · ") || "—"
-  );
-});
+const cpuShort = computed(() => (system.value.cpu_model || "—").replace(/\s+Processor$/i, ""));
 const memoryText = computed(() => {
   const modules = system.value.memory_modules || [];
   const types = [...new Set(modules.map((m) => m.type).filter(Boolean))];
   const speeds = [...new Set(modules.map((m) => m.speed).filter(Boolean))];
-  return (
-    [fast.value ? fmtBytes(fast.value.memory.total_bytes) : null, ...types, ...speeds].filter(Boolean).join(" · ") ||
-    "—"
-  );
+  return [fast.value ? fmtBytes(fast.value.memory.total_bytes) : null, ...types, ...speeds].filter(Boolean).join(" · ") || "—";
 });
 const networkText = computed(() => {
   const addresses = (network.value.addresses || []).filter((item) => !item.includes(":"));
-  return (
-    [...addresses, network.value.interface || fast.value?.network.interface].filter(Boolean).join(" · ") || "—"
-  );
+  return [...addresses, network.value.interface || fast.value?.network.interface].filter(Boolean).join(" · ") || "—";
 });
 const kernelText = computed(() => [system.value.kernel, system.value.architecture].filter(Boolean).join(" · ") || "—");
 const uptimeText = computed(() => duration(fast.value?.uptime_seconds));
