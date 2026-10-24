@@ -8,7 +8,9 @@ Read-only Linux server status dashboard: 1-second live metrics, 90-day SQLite hi
 
 - **Live metrics**: CPU (per core + frequency), memory, load, uptime, network throughput, physical disk I/O — every second.
 - **Slow collectors**: temperatures (5s), top processes (5s), containers and service checks (15s), filesystem usage and link info (30s), Docker stats (30s), SMART / Docker images / host health (60s), Docker space (5min), system/hardware inventory (1h).
-- **Host health**: file descriptors, zombie processes, failed systemd units, established TCP connections, CPU iowait and steal time, NIC errors/drops and inode usage.
+- **Host health**: file descriptors, zombie processes, failed systemd units, established TCP connections, CPU iowait/steal time, NIC errors/drops, inode usage and OOM kills.
+- **Sensors**: temperatures, plus fan speeds (RPM) and voltages (V) when the hardware exposes them.
+- **Certificates**: HTTPS service checks report days until the certificate expires.
 - **Bounded archive**: SQLite with WAL, zlib-compressed payloads, 90-day retention (configurable) and hourly rollup for 30/90-day charts.
 - **Incident journal**: threshold + hysteresis, restart-safe pending state, no fabricated recoveries.
 - **Authentication**: scrypt password hashes, SHA-256 session digests, `HttpOnly` cookie plus Bearer fallback for browsers that block cookies, per-client login throttling.

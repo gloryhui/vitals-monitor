@@ -49,7 +49,9 @@ const chart = CHARTS.chartTemp;
 const state = computed(() => dash.groupState("temperatures"));
 const statusText = computed(() => dash.groupStatus("temperatures"));
 
-const sensors = computed(() => dash.groupData("temperatures") || []);
+const sensors = computed(() =>
+  (dash.groupData("temperatures") || []).filter((item) => (item.kind || "temp") === "temp"),
+);
 const disks = computed(() => dash.groupData("smart") || []);
 
 function sensorTitle(item) {

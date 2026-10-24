@@ -51,12 +51,14 @@ class CollectorsTest(unittest.TestCase):
         self.assertEqual(value["cache_bytes"], 350 * 1024)
         self.assertEqual(value["swap_percent"], 0)
 
-    def test_sensor_voltages_are_not_temperatures(self):
+    def test_sensor_voltages_and_fans_are_not_temperatures(self):
         raw = json.dumps({"chip": {"voltage": {"in0_input": 1.2}, "fan": {"fan1_input": 900}, "Tctl": {"temp1_input": 52.5, "temp1_crit": 95}}})
         with patch.object(monitor, "run", return_value=raw):
-            values = monitor.temperatures()
-        self.assertEqual(len(values), 1)
-        self.assertEqual(values[0]["critical"], 95)
+            rows = monitor.temperatures()
+        temperatures = [row for row in rows if row["kind"] == "temp"]
+        self.assertEqual(len(temperatures), 1)
+        self.assertEqual(temperatures[0]["critical"], 95)
+        self.assertEqual({row["kind"] for row in rows}, {"temp", "fan", "voltage"})
 
     def test_dimm_empty_slots_ignored_and_configured_speed_preferred(self):
         output = "Memory Device\n Size: No Module Installed\nMemory Device\n Size: 8 GB\n Type: DDR4\n Speed: 2400 MT/s\n Configured Memory Speed: 3200 MT/s\n Bank Locator: CHANNEL A\n"

@@ -16,6 +16,7 @@
         <strong :class="{ bad: health.systemd_failed > 0 }">{{ health.systemd_failed ?? "—" }}</strong>
       </div>
       <div><span>TCP 已建立</span><strong>{{ health.tcp_established ?? "—" }}</strong></div>
+      <div><span>OOM 次数</span><strong :class="{ bad: health.oom_kill > 0 }">{{ health.oom_kill ?? "—" }}</strong></div>
       <div><span>CPU iowait</span><strong>{{ iowaitText }}</strong></div>
       <div><span>CPU steal</span><strong>{{ stealText }}</strong></div>
     </div>

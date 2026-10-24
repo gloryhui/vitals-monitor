@@ -11,6 +11,7 @@ import pwd
 import re
 import shutil
 import socket
+import ssl
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -278,6 +279,17 @@ class ProcessSampler:
         return " ".join(parts)[:500]
 
 
+def certificate_days(host, port, timeout=2):
+    context = ssl._create_unverified_context()
+    with socket.create_connection((host, port), timeout=timeout) as sock:
+        with context.wrap_socket(sock, server_hostname=host) as tls:
+            certificate = tls.getpeercert()
+    not_after = certificate.get("notAfter")
+    if not not_after:
+        return None
+    return round((ssl.cert_time_to_seconds(not_after) - time.time()) / 86400, 1)
+
+
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
@@ -315,6 +327,11 @@ class ServiceChecker:
                     result["http_status"] = response.code
                     result["ok"] = 200 <= response.code < 400
                     result["detail"] = f"HTTP {response.code}" + (" · 跳转响应" if 300 <= response.code < 400 else "")
+                if url.scheme == "https":
+                    try:
+                        result["certificate_days"] = certificate_days(url.hostname, url.port or 443, config.get("timeout", 2))
+                    except (OSError, ssl.SSLError, ValueError):
+                        result["certificate_days"] = None
             else:
                 result["target"] = f"{config['host']}:{config['port']}"
                 with socket.create_connection((config["host"], config["port"]), timeout=config.get("timeout", 2)):

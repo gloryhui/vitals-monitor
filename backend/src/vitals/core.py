@@ -168,11 +168,21 @@ def temperatures():
             if not isinstance(readings, dict):
                 continue
             for key, value in readings.items():
-                if re.fullmatch(r"temp\d+_input", key) and number(value) is not None:
-                    prefix = key.removesuffix("input")
+                if not isinstance(key, str) or number(value) is None:
+                    continue
+                prefix = key.removesuffix("input")
+                if re.fullmatch(r"temp\d+_input", key):
                     result.append({"chip": chip_name, "label": label, "value": round(value, 1),
-                                   "critical": number(readings.get(prefix + "crit"))})
-    if not result:
+                                   "critical": number(readings.get(prefix + "crit")), "kind": "temp"})
+                elif re.fullmatch(r"fan\d+_input", key):
+                    result.append({"chip": chip_name, "label": label, "value": round(value), "kind": "fan",
+                                   "min": number(readings.get(prefix + "min")),
+                                   "max": number(readings.get(prefix + "max"))})
+                elif re.fullmatch(r"in\d+_input", key):
+                    result.append({"chip": chip_name, "label": label, "value": round(value, 2), "kind": "voltage",
+                                   "min": number(readings.get(prefix + "min")),
+                                   "max": number(readings.get(prefix + "max"))})
+    if not any(item["kind"] == "temp" for item in result):
         raise UnsupportedCollector("当前环境未提供温度传感器")
     return result
 
@@ -318,6 +328,14 @@ def collect_host_health():
         failed = len([line for line in output.splitlines() if line.strip()])
     except (OSError, RuntimeError, subprocess.SubprocessError):
         pass
+    oom_kill = None
+    try:
+        for line in read_text("/proc/vmstat").splitlines():
+            if line.startswith("oom_kill "):
+                oom_kill = int(line.split()[1])
+                break
+    except (OSError, ValueError, IndexError):
+        pass
     tcp = 0
     for path in ("/proc/net/tcp", "/proc/net/tcp6"):
         try:
@@ -329,7 +347,7 @@ def collect_host_health():
             continue
     return {"fd_used": fd_used, "fd_max": fd_max,
             "fd_percent": round(fd_used / fd_max * 100, 1) if fd_used and fd_max else None,
-            "zombies": zombies, "systemd_failed": failed, "tcp_established": tcp}
+            "zombies": zombies, "systemd_failed": failed, "tcp_established": tcp, "oom_kill": oom_kill}
 
 
 def collect_docker_stats():
@@ -537,7 +555,8 @@ def temperature_history():
     the frontend still lists each individual sensor. Missing/stale values stay null.
     """
     temp_group, smart_group = group_snapshot("temperatures"), group_snapshot("smart")
-    sensors = [] if temp_group["stale"] else temp_group["data"] or []
+    sensors = [] if temp_group["stale"] else [item for item in (temp_group["data"] or [])
+                                              if item.get("kind", "temp") == "temp"]
     disks = [] if smart_group["stale"] else smart_group["data"] or []
     def highest(values):
         return max(values, default=None)

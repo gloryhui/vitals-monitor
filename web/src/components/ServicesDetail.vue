@@ -13,7 +13,7 @@
       <h3>全部检查</h3>
       <table class="dtable">
         <thead>
-          <tr><th>名称</th><th>类型</th><th>目标</th><th>结果</th><th class="num">延迟</th><th class="num">连续失败</th></tr>
+          <tr><th>名称</th><th>类型</th><th>目标</th><th>结果</th><th class="num">延迟</th><th class="num">证书</th><th class="num">连续失败</th></tr>
         </thead>
         <tbody>
           <tr v-for="item in rows" :key="item.id">
@@ -22,9 +22,10 @@
             <td class="mono">{{ item.target || "—" }}</td>
             <td :class="item.ok ? 'good' : 'bad'">{{ item.detail }}</td>
             <td class="num mono">{{ item.latency_ms }} ms</td>
+            <td class="num mono" :class="certTone(item)">{{ certText(item) }}</td>
             <td class="num mono">{{ item.consecutive_failures || 0 }}</td>
           </tr>
-          <tr v-if="!rows.length"><td colspan="6" class="muted">暂无服务检查配置</td></tr>
+          <tr v-if="!rows.length"><td colspan="7" class="muted">暂无服务检查配置</td></tr>
         </tbody>
       </table>
       <p class="note">每 15 秒检查一次；连续失败和连续成功达到阈值后才会记录事件。</p>
@@ -39,4 +40,7 @@ const dash = inject("dash");
 const rows = computed(() => dash.groupData("services") || []);
 const okCount = computed(() => rows.value.filter((item) => item.ok).length);
 const statusText = computed(() => dash.groupStatus("services"));
+const certText = (item) => (item.certificate_days != null ? `${item.certificate_days} 天` : "—");
+const certTone = (item) =>
+  item.certificate_days == null ? "muted" : item.certificate_days < 7 ? "bad" : item.certificate_days < 30 ? "warn" : "mono";
 </script>

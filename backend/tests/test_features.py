@@ -9,7 +9,7 @@ import threading
 import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from vitals import core as monitor
 from vitals import features as feature
@@ -54,6 +54,8 @@ class CapabilityTest(unittest.TestCase):
                 return "hdr\n"
             if path.endswith("/stat"):
                 return "1 (z) Z 1 1 1 1 0 0 0 0 0"
+            if path == "/proc/vmstat":
+                return "oom_kill 3\n"
             return ""
 
         with patch.object(monitor, "read_text", side_effect=read), \
@@ -64,6 +66,33 @@ class CapabilityTest(unittest.TestCase):
         self.assertEqual(data["zombies"], 1)
         self.assertEqual(data["systemd_failed"], 1)
         self.assertEqual(data["tcp_established"], 1)
+        self.assertEqual(data["oom_kill"], 3)
+
+    def test_temperatures_include_fans_and_voltage(self):
+        payload = json.dumps({
+            "coretemp-isa-0000": {
+                "Package id 0": {"temp1_input": 45.0, "temp1_crit": 100.0},
+                "fan1": {"fan1_input": 1200, "fan1_min": 0, "fan1_max": 3000},
+                "in0": {"in0_input": 1.2, "in0_min": 0.8, "in0_max": 1.4},
+            }
+        })
+        with patch.object(monitor, "require_tool"), patch.object(monitor, "run", return_value=payload):
+            rows = monitor.temperatures()
+        self.assertEqual({row["kind"] for row in rows}, {"temp", "fan", "voltage"})
+        self.assertEqual(next(row for row in rows if row["kind"] == "fan")["value"], 1200)
+
+    def test_certificate_days_reads_not_after(self):
+        context = MagicMock()
+        tls = MagicMock()
+        tls.__enter__.return_value = tls
+        tls.getpeercert.return_value = {"notAfter": "Dec 31 23:59:59 2030 GMT"}
+        context.wrap_socket.return_value = tls
+        sock = MagicMock()
+        sock.__enter__.return_value = sock
+        with patch.object(feature.socket, "create_connection", return_value=sock), \
+                patch.object(feature.ssl, "_create_unverified_context", return_value=context):
+            days = feature.certificate_days("example.com", 443)
+        self.assertGreater(days, 365)
 
     def test_docker_stats_are_parsed(self):
         payload = json.dumps({"Name": "web", "CPUPerc": "1.5%", "MemUsage": "10MiB / 1GiB",

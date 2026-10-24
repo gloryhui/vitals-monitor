@@ -22,6 +22,36 @@
       </table>
     </section>
 
+    <section v-if="fans.length" class="detail-section">
+      <h3>风扇转速</h3>
+      <table class="dtable">
+        <thead><tr><th>芯片</th><th>风扇</th><th class="num">转速</th><th class="num">范围</th></tr></thead>
+        <tbody>
+          <tr v-for="(item, index) in fans" :key="index">
+            <td class="mono">{{ item.chip }}</td>
+            <td>{{ item.label }}</td>
+            <td class="num mono">{{ item.value }} RPM</td>
+            <td class="num mono">{{ item.min ?? "—" }} ~ {{ item.max ?? "—" }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section v-if="voltages.length" class="detail-section">
+      <h3>电压</h3>
+      <table class="dtable">
+        <thead><tr><th>芯片</th><th>电压轨</th><th class="num">当前</th><th class="num">范围</th></tr></thead>
+        <tbody>
+          <tr v-for="(item, index) in voltages" :key="index">
+            <td class="mono">{{ item.chip }}</td>
+            <td>{{ item.label }}</td>
+            <td class="num mono">{{ item.value }} V</td>
+            <td class="num mono">{{ item.min ?? "—" }} ~ {{ item.max ?? "—" }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <section class="detail-section">
       <h3>磁盘温度</h3>
       <table class="dtable">
@@ -46,6 +76,9 @@ import { computed, inject } from "vue";
 import { num } from "../format";
 
 const dash = inject("dash");
-const sensors = computed(() => dash.groupData("temperatures") || []);
+const allSensors = computed(() => dash.groupData("temperatures") || []);
+const sensors = computed(() => allSensors.value.filter((item) => (item.kind || "temp") === "temp"));
+const fans = computed(() => allSensors.value.filter((item) => item.kind === "fan"));
+const voltages = computed(() => allSensors.value.filter((item) => item.kind === "voltage"));
 const disks = computed(() => dash.groupData("smart") || []);
 </script>
